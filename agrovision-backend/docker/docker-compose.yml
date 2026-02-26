@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # 1. API Platform Node
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: agrovision-api
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://agro_user:secure_pwd@postgres:5432/agrovision_core
+      - TIMESCALEDB_URL=postgres://agro_ts:secure_pwd@timescaledb:5432/telemetry
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BROKERS=kafka:9092
+    depends_on:
+      - postgres
+      - timescaledb
+      - redis
+      - kafka
+    volumes:
+      - ../src:/app/src
+    networks:
+      - agro_net
+
+  # Distributed Database Layer (PostgreSQL)
+  postgres:
+    image: postgres:15-alpine
+    container_name: agrovision-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: agro_user
+      POSTGRES_PASSWORD: secure_pwd
+      POSTGRES_DB: agrovision_core
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - agro_net
+
+  # 3. Telemetry Time-Series Storage
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: agrovision-tsdb
+    restart: always
+    environment:
+      POSTGRES_USER: agro_ts
+      POSTGRES_PASSWORD: secure_pwd
+      POSTGRES_DB: telemetry
+    ports:
+      - "5433:5432" # Exposed on different local port to avoid conflict
+    volumes:
+      - tsdb_data:/var/lib/postgresql/data
+    networks:
+      - agro_net
+
+  # 4. In-Memory Computing & Pub/Sub
+  redis:
+    image: redis:7-alpine
+    container_name: agrovision-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - agro_net
+
+  # 5. Async Event Broker (Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: agrovision-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - agro_net
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: agrovision-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - agro_net
+
+  # 6. Observability (Prometheus)
+  prometheus:
+    image: prom/prometheus
+    container_name: agrovision-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - agro_net
+
+volumes:
+  pg_data:
+  tsdb_data:
+  redis_data:
+
+
+networks:
+  agro_net:
+    driver: bridge

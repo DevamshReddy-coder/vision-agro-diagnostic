@@ -1,0 +1,28 @@
+{
+  "name": "agrovision-client",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "autoprefixer": "^10.4.20",
+    "axios": "^1.7.7",
+    "clsx": "^2.1.1",
+    "framer-motion": "^11.11.17",
+    "lucide-react": "^0.460.0",
+    "next": "15.1.0",
+    "postcss": "^8.4.49",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "recharts": "^2.13.3",
+    "socket.io-client": "^4.8.3",
+    "tailwind-merge": "^2.5.4",
+    "tailwindcss": "^3.4.15",
+    "zustand": "^5.0.1"
+  }
+}

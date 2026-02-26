@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # Infrastructure: Cache & Real-time Queue
+  redis:
+    image: redis:7-alpine
+    container_name: agro_cache
+    ports:
+      - "6379:6379"
+
+  # Infrastructure: Persistence
+  mongodb:
+    image: mongo:latest
+    container_name: agro_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  # Core API: Node.js Layered Architecture
+  backend:
+    build: ./server
+    container_name: agro_api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/agrovision
+      - JWT_SECRET=agrovision_startup_secret_2026
+      - ML_SERVICE_URL=http://ml-service:8000
+      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+      - redis
+
+  # ML Service: Python FastAPI Computer Vision
+  ml-service:
+    build: ./ml-service
+    container_name: agro_ml
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_PATH=/app/models/resnet50_v2.pth
+      - XAI_MODE=enabled
+
+  # Frontend: Next.js 15 PWA
+  frontend:
+    build: ./client
+    container_name: agro_web
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:
