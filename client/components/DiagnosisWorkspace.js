@@ -334,11 +334,25 @@ export default function DiagnosisWorkspace() {
                       <h3 className="text-4xl lg:text-6xl font-black mb-6 tracking-tighter leading-none uppercase">
                         {result.disease}
                       </h3>
+                      {result.diseaseType && result.diseaseType !== "None" && result.diseaseType !== "Unknown" && (
+                         <div className="absolute top-8 right-12 px-4 py-2 bg-slate-800 rounded-xl border border-slate-700 text-xs font-black uppercase tracking-widest text-slate-300">
+                             Pathogen Class: <span className="text-emerald-400">{result.diseaseType}</span>
+                         </div>
+                      )}
                       <div className="flex flex-wrap items-center gap-6">
                          <div className="flex items-center gap-2 text-slate-400">
                            <Info size={14} className="text-emerald-500" />
-                           <p className="text-sm font-medium italic">{result.crop} Specimen Detected</p>
+                           <p className="text-sm font-medium italic">{result.cropScientificName || result.crop} Specimen Detected</p>
                          </div>
+                         {result.diseaseScientificName && (
+                             <>
+                                <div className="hidden sm:block h-4 w-px bg-slate-700"></div>
+                                <div className="flex items-center gap-2 text-slate-400">
+                                <Leaf size={14} className="text-primary" />
+                                <p className="text-sm font-medium italic">{result.diseaseScientificName} pathogen active</p>
+                                </div>
+                             </>
+                         )}
                          <div className="hidden sm:block h-4 w-px bg-slate-700"></div>
                          <div className="flex items-center gap-2 text-slate-400">
                            <Leaf size={14} className="text-primary" />
@@ -372,8 +386,11 @@ export default function DiagnosisWorkspace() {
                            <div className="relative rounded-[3rem] overflow-hidden border border-slate-100 shadow-2xl group cursor-zoom-in">
                               <img src={result.xai_visualization} alt="Heatmap" className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-1000" />
                               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent flex items-end p-10">
-                                 <div className="max-w-xl">
-                                    <p className="text-white text-xs font-medium leading-relaxed mb-2 opacity-90">Engine insight: Critical necrotic lesions detected. The system identified high-intensity pathogen activity clusters on the leaf margins.</p>
+                                  <div className="max-w-xl">
+                                     <p className="text-white text-xs font-medium leading-relaxed mb-2 opacity-90">
+                                        <strong className="text-emerald-400 uppercase tracking-widest text-[9px] block mb-1">Engine insight:</strong>
+                                        {result.xaiInsight || "Critical necrotic lesions detected. The system identified high-intensity pathogen activity clusters on the leaf margins."}
+                                     </p>
                                     <div className="flex items-center gap-4">
                                        <div className="flex items-center gap-1.5">
                                           <div className="w-2 h-2 bg-red-500 rounded-full"></div>
@@ -400,10 +417,16 @@ export default function DiagnosisWorkspace() {
                             <li key={i} className="flex gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 items-center justify-between">
                                <div className="flex gap-4 items-center">
                                   <span className="w-5 h-5 bg-slate-900 text-white rounded-md flex items-center justify-center text-[9px] font-black flex-shrink-0">{i+1}</span>
-                                  <p className="text-xs font-bold text-slate-900 leading-relaxed">{t.name}</p>
+                                  <div>
+                                    <p className="text-xs font-bold text-slate-900 leading-relaxed mb-0.5">{t.name}</p>
+                                    {t.activeIngredient && <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Active Ingredient: {t.activeIngredient}</p>}
+                                  </div>
                                </div>
-                               <div className="text-[9px] uppercase font-black text-slate-500 tracking-widest">
-                                  {t.dosage} • Every {t.frequency}
+                               <div className="text-right">
+                                   <div className="text-[9px] uppercase font-black text-slate-500 tracking-widest bg-slate-100 px-3 py-1.5 rounded-lg mb-1 inline-block">
+                                      {t.dosage} • Every {t.frequency}
+                                   </div>
+                                   {t.safety && <p className="text-[8px] font-black uppercase tracking-widest text-red-500 max-w-[150px] leading-tight mt-1">{t.safety}</p>}
                                </div>
                             </li>
                           )) : (

@@ -36,22 +36,42 @@ export class InferenceProcessor extends WorkerHost {
         const rCrop = Math.random();
         const rDisease = Math.random();
 
-        const crops = ["Tomato", "Rice", "Maize", "Wheat", "Cotton"];
-        const crop = crops[Math.floor(rCrop * crops.length)];
+        const crops = [
+            { name: "Tomato", sci: "Solanum lycopersicum" },
+            { name: "Rice", sci: "Oryza sativa" },
+            { name: "Maize", sci: "Zea mays" },
+            { name: "Wheat", sci: "Triticum aestivum" },
+            { name: "Cotton", sci: "Gossypium spp." }
+        ];
+        const selectedCrop = crops[Math.floor(rCrop * crops.length)];
         const cropConfidence = (0.80 + Math.random() * 0.19).toFixed(2);
 
         const diseases = {
-            "Tomato": ["Early Blight", "Late Blight", "Leaf Mold", "Septoria Leaf Spot"],
-            "Rice": ["Brown Spot", "Blast", "Leaf Smut"],
-            "Maize": ["Common Rust", "Northern Leaf Blight", "Gray Leaf Spot"],
-            "Wheat": ["Stripe Rust", "Powdery Mildew", "Loose Smut"],
-            "Cotton": ["Bacterial Blight", "Verticillium Wilt"]
+            "Tomato": [
+                { name: "Early Blight", type: "Fungal", sci: "Alternaria solani", insight: "Concentric dark brown ring lesions (target spots) primarily affecting older foliage." },
+                { name: "Late Blight", type: "Fungal", sci: "Phytophthora infestans", insight: "Rapidly expanding water-soaked lesions with necrotizing centers." },
+                { name: "Bacterial Spot", type: "Bacterial", sci: "Xanthomonas campestris", insight: "Small, water-soaked spots that turn dark brown or black." }
+            ],
+            "Rice": [
+                { name: "Blast", type: "Fungal", sci: "Magnaporthe oryzae", insight: "Diamond-shaped lesions with gray centers and brown margins." },
+                { name: "Bacterial Blight", type: "Bacterial", sci: "Xanthomonas oryzae", insight: "Water-soaked stripes along the leaf blades." }
+            ],
+            "Maize": [
+                { name: "Common Rust", type: "Fungal", sci: "Puccinia sorghi", insight: "Elongated, reddish-brown pustules (uredinia) scattered across both leaf surfaces." }
+            ],
+            "Wheat": [
+                { name: "Stripe Rust", type: "Fungal", sci: "Puccinia striiformis", insight: "Yellow to orange pustules forming parallel stripes along the leaf veins." }
+            ],
+            "Cotton": [
+                { name: "Verticillium Wilt", type: "Fungal", sci: "Verticillium dahliae", insight: "Yellowing and necrosis of leaf margins, often showing a V-shaped pattern." }
+            ]
         };
 
         const severityLevels = ["Low", "Moderate", "High", "Critical"];
 
         let finalOutput: any = {
-            crop,
+            crop: selectedCrop.name,
+            cropScientificName: selectedCrop.sci,
             cropConfidence: parseFloat(cropConfidence),
         };
 
@@ -61,11 +81,13 @@ export class InferenceProcessor extends WorkerHost {
             finalOutput = {
                 ...finalOutput,
                 disease: "Healthy",
+                diseaseType: "None",
                 diseaseConfidence: 0.99,
                 healthScore: 98,
                 severity: "None",
                 riskLevel: "None",
                 affectedAreaPercent: 0,
+                xaiInsight: "Uniform green pigmentation with regular venation; no necrotic or chlorotic signatures detected.",
                 recommendations: {
                     organic: ["Maintain current nutrient routine", "Apply compost tea weekly"],
                     prevention: [
@@ -85,8 +107,10 @@ export class InferenceProcessor extends WorkerHost {
             finalOutput = {
                 ...finalOutput,
                 disease: "Inconclusive",
+                diseaseType: "Unknown",
                 diseaseConfidence: (0.30 + Math.random() * 0.15).toFixed(2),
                 message: "Image features are ambiguous. Suspected systemic stress or multi-vector pathogen.",
+                xaiInsight: "Pixel variance lacks clear pathological signatures; potential blur or abiotic stress overlap.",
                 severity: "Unknown",
                 riskLevel: "Requires Manual Review",
                 recommendations: {
@@ -103,34 +127,36 @@ export class InferenceProcessor extends WorkerHost {
             };
         } else {
             // Successful Disease Detection
-            const possibleDiseases = diseases[crop as keyof typeof diseases];
-            const disease = possibleDiseases[Math.floor(Math.random() * possibleDiseases.length)];
+            const possibleDiseases = diseases[selectedCrop.name as keyof typeof diseases];
+            const diseaseObj = possibleDiseases[Math.floor(Math.random() * possibleDiseases.length)];
             const diseaseConfidence = (0.75 + Math.random() * 0.24).toFixed(2);
             const sevIdx = Math.floor(Math.random() * 4);
             const severity = severityLevels[sevIdx];
 
-            const riskLevels = ["Minimal", "Elevated", "Severe", "Catastrophic"];
+            const riskLevels = ["Low", "Elevated", "High", "Critical"];
             const riskLevel = riskLevels[sevIdx];
             const areaP = Math.floor(Math.random() * (sevIdx + 1) * 20 + 5);
 
             finalOutput = {
                 ...finalOutput,
-                disease,
+                disease: diseaseObj.name,
+                diseaseScientificName: diseaseObj.sci,
+                diseaseType: diseaseObj.type,
                 diseaseConfidence: parseFloat(diseaseConfidence),
+                xaiInsight: diseaseObj.insight,
                 severity,
                 riskLevel,
                 affectedAreaPercent: Math.min(areaP, 95),
                 recommendations: {
                     pesticides: [
-                        { name: "Chlorothalonil", dosage: "2g/L", frequency: "7 days" },
-                        { name: "Mancozeb", dosage: "2.5g/L", frequency: "10 days" }
+                        { name: "Bravo Weather Stik", activeIngredient: "Chlorothalonil", dosage: "2g/L", frequency: "7 days", safety: "Wear gloves; highly toxic to aquatic life" }
                     ],
-                    organic: ["Neem oil spray 3ml/L", "Bacillus subtilis formulation"],
+                    organic: ["Neem oil emulsion 3ml/L", "Bacillus subtilis biopesticide formulation"],
                     prevention: [
-                        "Avoid overhead irrigation",
-                        "Improve air circulation",
-                        "Remove infected leaves",
-                        "Sanitize pruning tools between cuts"
+                        "Avoid overhead irrigation to reduce humidity",
+                        "Improve canopy air circulation",
+                        "Remove and destroy infected leaves",
+                        "Implement minimum 3-year crop rotation"
                     ]
                 },
                 insights: {
