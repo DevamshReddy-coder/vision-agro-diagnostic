@@ -91,7 +91,6 @@ export default function DiagnosisWorkspace() {
       const token = localStorage.getItem('token');
       const config = {
         headers: {
-          'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
         }
       };

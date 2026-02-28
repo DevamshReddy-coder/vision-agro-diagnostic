@@ -109,6 +109,7 @@ JSON FORMAT SCHEMA (STRICTLY THIS!):
                 this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 95 });
             } catch (err) {
                 console.error("[AI Worker] Gemini Execution Failed, falling back to mock:", err);
+                require('fs').writeFileSync('gemini-error.txt', (err?.stack || JSON.stringify(err)) + '\n\n' + err?.message);
             }
         }
 
