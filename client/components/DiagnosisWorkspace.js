@@ -33,13 +33,17 @@ export default function DiagnosisWorkspace() {
        } else if (data.status === 'COMPLETED') {
           // Finish loading and show data
           setResult({
-            disease: data.result.name,
-            scientificName: "Pathogen Variant", // Mocked secondary
-            confidence: data.result.confidence,
-            severity: "High", // Fallback generated
+            disease: data.result.disease || "Unknown Anomaly",
+            crop: data.result.crop || "Unknown",
+            confidence: (data.result.diseaseConfidence * 100).toFixed(1),
+            severity: data.result.severity || "Unknown",
+            riskLevel: data.result.riskLevel || "Unknown",
+            affectedAreaPercent: data.result.affectedAreaPercent || 0,
             xai_visualization: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=1000",
-            treatment: ["Apply protective fungicide", "Ensure dry foliage"],
-            prevention: ["Rotate crops", "Use resistant varieties"]
+            recommendations: data.result.recommendations || { pesticides: [], organic: [], prevention: [] },
+            insights: data.result.insights || {},
+            healthScore: data.result.healthScore || null,
+            message: data.result.message || null
           });
           setLoading(false);
           setInferenceProgress(null);
@@ -103,13 +107,19 @@ export default function DiagnosisWorkspace() {
       console.warn("Diagnosis Error - Using offline simulation fallback");
       setTimeout(() => {
         setResult({
-            disease: "Tomato Late Blight (Simulation)",
-            scientificName: "Phytophthora infestans",
+            disease: "Tomato Late Blight (Offline Fallback)",
+            crop: "Tomato",
             confidence: 97.4,
             severity: "High",
+            riskLevel: "Critical",
+            affectedAreaPercent: 25,
             xai_visualization: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=1000",
-            treatment: ["Apply protective fungicide", "Ensure dry foliage"],
-            prevention: ["Rotate crops", "Use resistant varieties"]
+            recommendations: {
+                pesticides: [{ name: "Chlorothalonil", dosage: "2g/L", frequency: "7 days" }],
+                organic: ["Neem oil spray 3ml/L"],
+                prevention: ["Rotate crops", "Use resistant varieties"]
+            },
+            insights: { spreadProbability: "High", yieldImpact: "20-40%", environmentalFactor: "Offline mode active" }
         });
         setLoading(false);
       }, 2000);
@@ -327,20 +337,22 @@ export default function DiagnosisWorkspace() {
                       <div className="flex flex-wrap items-center gap-6">
                          <div className="flex items-center gap-2 text-slate-400">
                            <Info size={14} className="text-emerald-500" />
-                           <p className="text-sm font-medium italic">{result.scientificName || 'Unclassified'}</p>
+                           <p className="text-sm font-medium italic">{result.crop} Specimen Detected</p>
                          </div>
                          <div className="hidden sm:block h-4 w-px bg-slate-700"></div>
                          <div className="flex items-center gap-2 text-slate-400">
                            <Leaf size={14} className="text-primary" />
-                           <p className="text-[10px] font-black uppercase tracking-widest">Autonomous Detection</p>
+                           <p className="text-[10px] font-black uppercase tracking-widest">{result.message ? "Manual Review Requested" : "Autonomous Detection"}</p>
                          </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 bg-slate-50 border-b border-slate-100">
-                    <Metric label="Analysis Confidence" value={`${result.confidence}%`} status="Optimized" />
-                    <Metric label="Infection Severity" value={result.severity} status={result.severity === 'High' ? 'Critical' : 'Moderate'} isUrgent={result.severity === 'High'} />
+                  <div className="grid grid-cols-2 md:grid-cols-4 bg-slate-50 border-b border-slate-100">
+                    <Metric label={result.healthScore ? "Health Score" : "Confidence"} value={result.healthScore ? `${result.healthScore}/100` : `${result.confidence}%`} status="Optimized" />
+                    <Metric label="Severity" value={result.severity} status={result.severity === 'High' || result.severity === 'Critical' ? 'Critical' : 'Moderate'} isUrgent={result.severity === 'High' || result.severity === 'Critical'} />
+                    <Metric label="Risk Matrix" value={result.riskLevel} status={result.insights?.spreadProbability ? `${result.insights.spreadProbability} Spread` : 'Stable'} />
+                    <Metric label="Infected Area" value={`${result.affectedAreaPercent}%`} status={result.insights?.yieldImpact ? `${result.insights.yieldImpact} Yield Loss` : 'Minimal'} isUrgent={result.affectedAreaPercent > 20} />
                   </div>
 
                   <div className="p-12 space-y-12 bg-white flex-1">
@@ -381,31 +393,56 @@ export default function DiagnosisWorkspace() {
                       <div className="space-y-6">
                         <div className="flex items-center gap-3">
                            <div className="p-2 bg-red-50 text-red-600 rounded-lg"><AlertCircle size={18} /></div>
-                           <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">Active Treatment</h4>
+                           <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">Chemical Intervention</h4>
                         </div>
                         <ul className="space-y-3">
-                          {(result.treatment || []).map((t, i) => (
-                            <li key={i} className="flex gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                               <span className="w-5 h-5 bg-slate-900 text-white rounded-md flex items-center justify-center text-[9px] font-black flex-shrink-0">{i+1}</span>
-                               <p className="text-xs font-bold text-slate-700 leading-relaxed">{t}</p>
+                          {result.recommendations?.pesticides?.length > 0 ? result.recommendations.pesticides.map((t, i) => (
+                            <li key={i} className="flex gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 items-center justify-between">
+                               <div className="flex gap-4 items-center">
+                                  <span className="w-5 h-5 bg-slate-900 text-white rounded-md flex items-center justify-center text-[9px] font-black flex-shrink-0">{i+1}</span>
+                                  <p className="text-xs font-bold text-slate-900 leading-relaxed">{t.name}</p>
+                               </div>
+                               <div className="text-[9px] uppercase font-black text-slate-500 tracking-widest">
+                                  {t.dosage} • Every {t.frequency}
+                               </div>
                             </li>
-                          ))}
+                          )) : (
+                             <div className="p-5 text-xs font-bold text-slate-400 uppercase tracking-widest border border-dashed border-slate-200 rounded-2xl text-center">No chemical intervention required</div>
+                          )}
                         </ul>
                       </div>
 
                       <div className="space-y-6">
                         <div className="flex items-center gap-3">
                            <div className="p-2 bg-primary/10 text-primary rounded-lg"><ShieldCheck size={18} /></div>
-                           <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">Prevention Protocol</h4>
+                           <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">Prevention & Organic Protocol</h4>
                         </div>
                         <ul className="space-y-3">
-                          {(result.prevention || []).map((p, i) => (
-                            <li key={i} className="flex gap-4 p-4 bg-primary/5 rounded-2xl border border-primary/10">
-                               <CheckCircle2 size={14} className="text-primary mt-0.5 flex-shrink-0" />
-                               <p className="text-xs font-bold text-slate-700 leading-relaxed">{p}</p>
+                          {(result.recommendations?.organic || []).map((p, i) => (
+                            <li key={`org-${i}`} className="flex gap-3 px-4 py-3 bg-primary/5 rounded-2xl border border-primary/10">
+                               <Leaf size={14} className="text-primary mt-0.5 flex-shrink-0" />
+                               <p className="text-xs font-bold text-emerald-800 leading-relaxed">{p}</p>
+                            </li>
+                          ))}
+                          {(result.recommendations?.prevention || []).map((p, i) => (
+                            <li key={`prev-${i}`} className="flex gap-3 px-4 py-3 bg-slate-50 rounded-2xl border border-slate-100">
+                               <CheckCircle2 size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+                               <p className="text-xs font-bold text-slate-600 leading-relaxed">{p}</p>
                             </li>
                           ))}
                         </ul>
+                        
+                        {result.message && (
+                            <div className="mt-6 p-5 bg-amber-50 rounded-2xl border border-amber-200">
+                                <p className="text-xs font-bold text-amber-800 leading-relaxed"><span className="font-black uppercase tracking-widest">Notice:</span> {result.message}</p>
+                            </div>
+                        )}
+                        {result.insights?.environmentalFactor && (
+                            <div className="mt-2 p-4 bg-slate-900 rounded-2xl text-white">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Environmental Factor</p>
+                                <p className="text-xs font-bold text-white leading-relaxed">{result.insights.environmentalFactor}</p>
+                            </div>
+                        )}
                       </div>
                     </div>
                   </div>

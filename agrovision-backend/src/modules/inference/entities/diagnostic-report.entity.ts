@@ -30,6 +30,9 @@ export class DiagnosticReport {
     @Column({ name: 'confidence_score', type: 'float', nullable: true })
     confidenceScore: number;
 
+    @Column({ name: 'full_result', type: 'jsonb', nullable: true })
+    fullResult: any;
+
     @Column({
         type: 'enum',
         enum: DiagnosticStatus,
