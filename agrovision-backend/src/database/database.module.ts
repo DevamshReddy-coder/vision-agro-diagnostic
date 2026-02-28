@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     imports: [
         TypeOrmModule.forRoot({
             type: 'postgres',
+            url: process.env.DATABASE_URL,
             host: process.env.DATABASE_HOST || 'localhost',
             port: parseInt(process.env.DATABASE_PORT || '5434'),
             username: process.env.DATABASE_USER || 'agro_user',
@@ -13,6 +14,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
             autoLoadEntities: true,
             synchronize: process.env.NODE_ENV !== 'production', // true for rapid development; false in prod!
             logging: false,
+            ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
         }),
     ],
 })

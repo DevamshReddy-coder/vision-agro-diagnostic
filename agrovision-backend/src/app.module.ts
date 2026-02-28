@@ -17,7 +17,12 @@ import { LibraryModule } from './modules/library/library.module';
 
         // 2. Global Redis connection for Queues (BullMQ)
         BullModule.forRoot({
-            connection: {
+            connection: process.env.REDIS_URL ? {
+                host: new URL(process.env.REDIS_URL).hostname,
+                port: parseInt(new URL(process.env.REDIS_URL).port || '6379'),
+                password: new URL(process.env.REDIS_URL).password,
+                tls: process.env.REDIS_URL.startsWith('rediss://') ? { rejectUnauthorized: false } : undefined,
+            } : {
                 host: process.env.REDIS_HOST || 'localhost',
                 port: parseInt(process.env.REDIS_PORT || '6379'),
             },
