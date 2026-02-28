@@ -104,25 +104,28 @@ export default function DiagnosisWorkspace() {
       setInferenceProgress(5); // Initial processing state
 
     } catch (err) {
-      console.warn("Diagnosis Error - Using offline simulation fallback");
+      console.error("Diagnosis Error:", err);
+      // Wait to see if WebSocket is connected and returns something, otherwise fallback
       setTimeout(() => {
-        setResult({
-            disease: "Tomato Late Blight (Offline Fallback)",
-            crop: "Tomato",
-            confidence: 97.4,
-            severity: "High",
-            riskLevel: "Critical",
-            affectedAreaPercent: 25,
-            xai_visualization: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=1000",
-            recommendations: {
-                pesticides: [{ name: "Chlorothalonil", dosage: "2g/L", frequency: "7 days" }],
-                organic: ["Neem oil spray 3ml/L"],
-                prevention: ["Rotate crops", "Use resistant varieties"]
-            },
-            insights: { spreadProbability: "High", yieldImpact: "20-40%", environmentalFactor: "Offline mode active" }
-        });
-        setLoading(false);
-      }, 2000);
+        if (loading) {
+            setResult({
+                disease: "Network Error - Offline Fallback",
+                crop: cropType,
+                confidence: 50.0,
+                severity: "Unknown",
+                riskLevel: "Unknown",
+                affectedAreaPercent: 0,
+                xai_visualization: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=1000",
+                recommendations: {
+                    pesticides: [],
+                    organic: [],
+                    prevention: ["Check server connection"]
+                },
+                insights: { spreadProbability: "Unknown", yieldImpact: "Unknown", environmentalFactor: "Offline mode active" }
+            });
+            setLoading(false);
+        }
+      }, 10000); // Only fallback if real response takes >10s
     }
   };
 
