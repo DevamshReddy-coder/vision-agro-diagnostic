@@ -27,7 +27,7 @@ export class InferenceController {
         const mockS3Url = `https://s3.agrovision.ai/specimens/${crypto.randomUUID()}.jpg`;
 
         // 2. The user would typically come from JwtAuthGuard.req.user
-        const mockUserId = 'uuid-agronomist-123';
+        const mockUserId = crypto.randomUUID();
 
         // 3. Queue the job in the backend service
         const report = await this.inferenceService.submitAnalysisJob(mockUserId, mockS3Url, base64Image, mimeType);
