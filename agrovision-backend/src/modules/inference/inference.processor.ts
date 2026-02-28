@@ -102,7 +102,9 @@ JSON FORMAT SCHEMA (STRICTLY THIS!):
 
                 const rawJson = response.text;
                 if (rawJson) {
-                    finalOutput = JSON.parse(rawJson);
+                    // Remove markdown code block syntax if Gemini wrapped it
+                    const jsonString = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+                    finalOutput = JSON.parse(jsonString);
                 }
                 this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 95 });
             } catch (err) {
