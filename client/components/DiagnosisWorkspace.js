@@ -23,7 +23,7 @@ export default function DiagnosisWorkspace() {
 
   useEffect(() => {
     // 1. Initialize Real-Time WebSocket Connection
-    socketRef.current = io('http://localhost:5000');
+    socketRef.current = io(process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace('/api/v1', '') : 'http://localhost:5000');
     
     // 2. Listen for background Inference Progress
     socketRef.current.on('inference_progress', (data) => {
@@ -61,7 +61,8 @@ export default function DiagnosisWorkspace() {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const res = await axios.get('http://localhost:5000/api/v1/diagnose/history', {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const res = await axios.get(`${baseUrl}/diagnose/history`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setHistory(res.data);
@@ -96,7 +97,8 @@ export default function DiagnosisWorkspace() {
       };
       
       // 1. Submit to new async endpoint
-      const res = await axios.post('http://localhost:5000/api/v1/inference/analyze', formData, config);
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const res = await axios.post(`${baseUrl}/inference/analyze`, formData, config);
       
       // 2. We now wait for the websocket to return 'COMPLETED'. We do not setLoading(false) here!
       console.log("Async job queued. Report tracking ID:", res.data.reportId);
@@ -130,7 +132,8 @@ export default function DiagnosisWorkspace() {
 
   const loadFromHistory = (item) => {
     setResult(item);
-    setPreview(`http://localhost:5000${item.imageUrl}`);
+    const wsUrl = process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace('/api/v1', '') : 'http://localhost:5000';
+    setPreview(`${wsUrl}${item.imageUrl}`);
     setShowHistory(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -183,7 +186,7 @@ export default function DiagnosisWorkspace() {
                          onClick={() => loadFromHistory(h)}
                        >
                          <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-inner bg-slate-100 border border-slate-200">
-                            <img src={`http://localhost:5000${h.imageUrl}`} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                            <img src={`${process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace('/api/v1', '') : 'http://localhost:5000'}${h.imageUrl}`} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
                          </div>
                          <div className="flex-1">
                             <h4 className="text-sm font-black text-slate-900 group-hover:text-primary transition-colors tracking-tight">{h.disease}</h4>

@@ -24,8 +24,9 @@ export default function AuthModal({ isOpen, onClose }) {
     setSuccess('');
     
     try {
-      const endpoint = isLogin ? '/api/v1/auth/login' : '/api/v1/auth/register';
-      const res = await axios.post(`http://localhost:5000${endpoint}`, {
+      const endpoint = isLogin ? '/auth/login' : '/auth/register';
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const res = await axios.post(`${baseUrl}${endpoint}`, {
         ...formData,
         email: formData.email.toLowerCase().trim()
       });

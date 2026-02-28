@@ -29,7 +29,8 @@ export default function AnalyticsDashboard() {
       try {
          const token = localStorage.getItem('token');
          const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-         const res = await axios.get('http://localhost:5000/api/v1/analytics/overview', config);
+         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+         const res = await axios.get(`${baseUrl}/analytics/overview`, config);
          setStats(res.data);
       } catch (err) {
          console.warn("Analytics fetch skipped or unavailable (Offline mode)");

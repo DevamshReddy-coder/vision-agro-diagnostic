@@ -13,7 +13,7 @@ export default function NotificationCenter() {
 
   useEffect(() => {
     // 1. Establish WebSocket connection
-    socketRef.current = io('http://localhost:5000');
+    socketRef.current = io(process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace('/api/v1', '') : 'http://localhost:5000');
 
     // 2. Listen for critical alerts from the AI / Environment Engine
     socketRef.current.on('alert_critical', (data) => {
