@@ -13,8 +13,15 @@ export class InferenceController {
     @ApiOperation({ summary: 'Submit high-res crop specimen for neural mapping (Async job)' })
     @ApiConsumes('multipart/form-data')
     @ApiResponse({ status: 202, description: 'Job accepted into processing queue. Returns reportId for status polling or socket subscription.' })
-    @UseInterceptors(FileInterceptor('file')) // Simulating multer interceptor 
+    @UseInterceptors(FileInterceptor('image')) // Match frontend form data exactly
     async submitAnalysis(@UploadedFile() file: Express.Multer.File) {
+        let base64Image = null;
+        let mimeType = null;
+        if (file) {
+            base64Image = file.buffer.toString('base64');
+            mimeType = file.mimetype;
+        }
+
         // 1. Mock file upload to S3. Imagine this returns a URL to the stored asset.
         console.log(`[Diagnostic Lab] Received Specimen: ${file?.originalname || 'MockImage.jpg'}`);
         const mockS3Url = `https://s3.agrovision.ai/specimens/${crypto.randomUUID()}.jpg`;
@@ -23,7 +30,7 @@ export class InferenceController {
         const mockUserId = 'uuid-agronomist-123';
 
         // 3. Queue the job in the backend service
-        const report = await this.inferenceService.submitAnalysisJob(mockUserId, mockS3Url);
+        const report = await this.inferenceService.submitAnalysisJob(mockUserId, mockS3Url, base64Image, mimeType);
 
         // 4. Return immediately to front-end to avoid blocking HTTP requests while inference runs
         return {
