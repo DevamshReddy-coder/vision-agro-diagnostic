@@ -167,20 +167,22 @@ export default function Navbar({ onLoginClick }) {
               </AnimatePresence>
             </div>
           ) : (
-            <div className="flex items-center gap-5">
-              <button 
-                className="hidden sm:block text-[10px] font-black text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-[0.2em]"
-                onClick={onLoginClick}
-              >
-                Log In
-              </button>
+            <div className="flex items-center gap-3">
               <motion.button 
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                className="bg-slate-900 text-white px-8 py-4 rounded-[1.2rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-primary transition-all duration-500 h-fit"
-                onClick={() => document.getElementById('platform')?.scrollIntoView({ behavior: 'smooth' })}
+                className="hidden sm:flex items-center gap-2 border-2 border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-emerald-600 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-[0.15em] transition-all duration-300"
+                onClick={onLoginClick}
               >
-                Access Lab
+                <User size={15} /> Sign In
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-emerald-500 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-[0.15em] shadow-lg shadow-emerald-500/25 hover:bg-emerald-600 transition-all duration-300 h-fit"
+                onClick={onLoginClick}
+              >
+                Get Started
               </motion.button>
             </div>
           )}
@@ -226,22 +228,22 @@ export default function Navbar({ onLoginClick }) {
               {!user && (
                 <div className="grid grid-cols-2 gap-4 mt-8">
                   <button 
-                    className="py-5 bg-slate-50 text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-slate-200"
+                    className="py-4 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:border-emerald-400 hover:text-emerald-600 transition-all"
                     onClick={() => {
                         setIsMobileMenuOpen(false);
                         if (onLoginClick) onLoginClick();
                     }}
                   >
-                    System Log In
+                    Sign In
                   </button>
                   <button 
-                    className="py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl"
+                    className="py-4 bg-emerald-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all"
                     onClick={() => {
                         setIsMobileMenuOpen(false);
-                        document.getElementById('platform')?.scrollIntoView({ behavior: 'smooth' });
+                        if (onLoginClick) onLoginClick();
                     }}
                   >
-                    Access Lab
+                    Get Started
                   </button>
                 </div>
               )}
