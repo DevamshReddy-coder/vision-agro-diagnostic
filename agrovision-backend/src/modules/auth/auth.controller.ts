@@ -1,12 +1,16 @@
 import { Controller, Post, Body, UnauthorizedException, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { OtpService } from './otp.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) { }
+    constructor(
+        private authService: AuthService,
+        private otpService: OtpService,
+    ) { }
 
     @Public() // No JWT required - this IS the login endpoint
     @Post('login')
@@ -42,5 +46,35 @@ export class AuthController {
     async logout() {
         // In production: add token to Redis blacklist here
         return { status: 'success', message: 'Session terminated successfully.' };
+    }
+
+    // ── OTP: Send ─────────────────────────────────────────────────────────────
+    @Public()
+    @Post('otp/send')
+    @ApiOperation({ summary: 'Send OTP to mobile number via SMS (Twilio)' })
+    @ApiBody({ schema: { properties: { phone: { type: 'string', example: '9876543210' } } } })
+    async sendOtp(@Body() body: { phone: string }) {
+        if (!body.phone) {
+            throw new HttpException('Phone number is required.', HttpStatus.BAD_REQUEST);
+        }
+        const result = await this.otpService.sendOtp(body.phone);
+        return {
+            success: true,
+            message: 'OTP sent successfully to your mobile number.',
+            ...(result.dev_otp ? { dev_otp: result.dev_otp } : {}), // Only exposed in dev mode
+        };
+    }
+
+    // ── OTP: Verify ───────────────────────────────────────────────────────────
+    @Public()
+    @Post('otp/verify')
+    @ApiOperation({ summary: 'Verify OTP submitted by user' })
+    @ApiBody({ schema: { properties: { phone: { type: 'string' }, otp: { type: 'string', example: '123456' } } } })
+    async verifyOtp(@Body() body: { phone: string; otp: string }) {
+        if (!body.phone || !body.otp) {
+            throw new HttpException('Phone number and OTP are required.', HttpStatus.BAD_REQUEST);
+        }
+        await this.otpService.verifyOtp(body.phone, body.otp);
+        return { success: true, message: 'Phone number verified successfully.' };
     }
 }

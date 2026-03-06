@@ -156,22 +156,43 @@ export default function AuthModal({ isOpen, onClose }) {
     } finally { setLoading(false); }
   };
 
-  // ── OTP Verify (UI simulation — wire to backend when SMS provider ready) ──
+  // ── OTP Verify (calls real backend endpoint) ─────────────────────────────
   const handleOtpVerify = async (e) => {
     e.preventDefault();
     const code = otp.join('');
     if (code.length < 6) { setError('Please enter the complete 6-digit code.'); return; }
     setLoading(true); setError('');
-    // Simulate API call — replace with real OTP endpoint
-    await new Promise(r => setTimeout(r, 1200));
-    setLoading(false);
-    setSuccess('Phone verified! Creating your account...');
-    setTimeout(() => handleRegister({ preventDefault: () => {} }), 800);
+    try {
+      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      await axios.post(`${base}/auth/otp/verify`, { phone: formData.phone, otp: code });
+      // OTP verified — now complete registration
+      await handleRegister({ preventDefault: () => {} });
+    } catch (err) {
+      setError(err.response?.data?.message || 'Incorrect or expired OTP. Try again.');
+      setLoading(false);
+    }
   };
 
   // ── Google Sign-In (stub — implement Google OAuth next) ──────────────────
   const handleGoogleSignIn = () => {
     setError('Google Sign-In is being configured. Please use email for now.');
+  };
+
+  // ── Send OTP (calls real backend API) ─────────────────────────────────────
+  const handleSendOtp = async (phone) => {
+    if (phone.length !== 10) { setError('Enter a valid 10-digit mobile number first.'); return; }
+    setLoading(true); setError('');
+    try {
+      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const res = await axios.post(`${base}/auth/otp/send`, { phone });
+      setScreen('otp');
+      // In development mode, backend returns the OTP for testing
+      if (res.data.dev_otp) {
+        setError(`[DEV] Your OTP is: ${res.data.dev_otp}`);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send OTP. Check your number and try again.');
+    } finally { setLoading(false); }
   };
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -347,12 +368,11 @@ export default function AuthModal({ isOpen, onClose }) {
                     />
                     <button
                       type="button"
-                      onClick={() => {
-                        if (formData.phone.length === 10) { setScreen('otp'); setError(''); }
-                        else setError('Enter a valid 10-digit mobile number first.');
-                      }}
-                      className="shrink-0 px-4 py-2 bg-emerald-500 text-white text-xs font-black rounded-xl hover:bg-emerald-600 transition-colors shadow-md shadow-emerald-500/20 whitespace-nowrap"
+                      onClick={() => handleSendOtp(formData.phone)}
+                      disabled={loading}
+                      className="shrink-0 px-4 py-2 bg-emerald-500 text-white text-xs font-black rounded-xl hover:bg-emerald-600 transition-colors shadow-md shadow-emerald-500/20 whitespace-nowrap disabled:opacity-60 flex items-center gap-1"
                     >
+                      {loading ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
                       Send OTP
                     </button>
                   </div>
