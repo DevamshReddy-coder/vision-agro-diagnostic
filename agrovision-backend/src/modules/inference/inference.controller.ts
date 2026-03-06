@@ -1,9 +1,18 @@
-import { Controller, Post, Get, Param, UploadedFile, UseInterceptors, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+    Controller, Post, Get, Param, UploadedFile,
+    UseInterceptors, HttpCode, HttpStatus, BadRequestException, Request
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { InferenceService } from './inference.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiConsumes } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
+
+const IMAGE_MIME_WHITELIST = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB hard limit
 
 @ApiTags('AI Inference Pipeline')
+@ApiBearerAuth()
 @Controller('inference')
 export class InferenceController {
     constructor(private readonly inferenceService: InferenceService) { }
@@ -12,31 +21,48 @@ export class InferenceController {
     @HttpCode(HttpStatus.ACCEPTED)
     @ApiOperation({ summary: 'Submit high-res crop specimen for neural mapping (Async job)' })
     @ApiConsumes('multipart/form-data')
-    @ApiResponse({ status: 202, description: 'Job accepted into processing queue. Returns reportId for status polling or socket subscription.' })
-    @UseInterceptors(FileInterceptor('image')) // Match frontend form data exactly
-    async submitAnalysis(@UploadedFile() file: Express.Multer.File) {
-        let base64Image = null;
-        let mimeType = null;
-        if (file) {
-            base64Image = file.buffer.toString('base64');
-            mimeType = file.mimetype;
+    @ApiResponse({ status: 202, description: 'Job accepted into processing queue. Returns reportId for WebSocket subscription.' })
+    @UseInterceptors(FileInterceptor('image'))
+    async submitAnalysis(
+        @UploadedFile() file: Express.Multer.File,
+        @CurrentUser() user: any,
+    ) {
+        // 1. Validate file is present
+        if (!file) {
+            throw new BadRequestException('No image file provided. Attach a "image" field with a valid crop image.');
         }
 
-        // 1. Mock file upload to S3. Imagine this returns a URL to the stored asset.
-        console.log(`[Diagnostic Lab] Received Specimen: ${file?.originalname || 'MockImage.jpg'}`);
-        const mockS3Url = `https://s3.agrovision.ai/specimens/${crypto.randomUUID()}.jpg`;
+        // 2. Validate MIME type (whitelist check)
+        if (!IMAGE_MIME_WHITELIST.includes(file.mimetype)) {
+            throw new BadRequestException(
+                `Invalid file type: ${file.mimetype}. Accepted types: JPEG, PNG, WebP, GIF.`
+            );
+        }
 
-        // 2. The user would typically come from JwtAuthGuard.req.user
-        const mockUserId = crypto.randomUUID();
+        // 3. Validate file size (hard 10MB cap)
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+            throw new BadRequestException(
+                `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum allowed size is 10MB.`
+            );
+        }
 
-        // 3. Queue the job in the backend service
-        const report = await this.inferenceService.submitAnalysisJob(mockUserId, mockS3Url, base64Image, mimeType);
+        const base64Image = file.buffer.toString('base64');
+        const mimeType = file.mimetype;
 
-        // 4. Return immediately to front-end to avoid blocking HTTP requests while inference runs
+        console.log(`[Diagnostic Lab] Received specimen: ${file.originalname} (${(file.size / 1024).toFixed(0)}KB, ${mimeType}) from user ${user?.sub || 'anonymous'}`);
+
+        // 4. Use real authenticated user ID from JWT payload
+        const userId = user?.sub || crypto.randomUUID();
+        const mockS3Url = `https://s3.agrovision.ai/specimens/${userId}/${Date.now()}-${file.originalname}`;
+
+        // 5. Queue the job
+        const report = await this.inferenceService.submitAnalysisJob(userId, mockS3Url, base64Image, mimeType);
+
         return {
-            message: 'Specimen queued for deep analysis.',
+            message: 'Specimen accepted. Neural analysis pipeline initiated.',
             reportId: report.id,
             status: report.status,
+            estimatedProcessingTime: '3-10 seconds',
         };
     }
 
@@ -44,6 +70,11 @@ export class InferenceController {
     @ApiOperation({ summary: 'Poll inference status if WebSockets are unavailable.' })
     async checkJobStatus(@Param('reportId') reportId: string) {
         const report = await this.inferenceService.getReportStatus(reportId);
-        return { status: report.status, result: report.diseasePredictedName, confidence: report.confidenceScore };
+        return {
+            status: report.status,
+            result: report.diseasePredictedName,
+            confidence: report.confidenceScore,
+            fullResult: report.status === 'COMPLETED' ? report.fullResult : null,
+        };
     }
 }

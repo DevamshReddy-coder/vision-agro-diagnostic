@@ -1,0 +1,109 @@
+name: 🚀 AgroVision AI - CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # === JOB 1: Backend Lint, Type Check & Build ===
+  backend-ci:
+    name: 🧠 Backend - Build & Type Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./agrovision-backend
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: agrovision-backend/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 TypeScript type check
+        run: npx tsc --noEmit
+
+      - name: 🏗️ Build production bundle
+        run: npm run build
+
+      - name: ✅ Build successful
+        run: echo "Backend compiled successfully!"
+
+  # === JOB 2: Frontend Lint & Build ===
+  frontend-ci:
+    name: 🎨 Frontend - Build & Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./client
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🏗️ Build Next.js production bundle
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://agrovision-api-7uwq.onrender.com/api/v1
+
+      - name: ✅ Build successful
+        run: echo "Frontend compiled successfully!"
+
+  # === JOB 3: Deploy to Render (Backend) on push to main ===
+  deploy-backend:
+    name: 🚢 Deploy Backend → Render
+    needs: [backend-ci]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚀 Trigger Render Deploy Hook
+        run: |
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+            echo "✅ Render deployment triggered!"
+          else
+            echo "⚠️ No RENDER_DEPLOY_HOOK_URL secret configured. Skipping auto-deploy."
+          fi
+
+  # === JOB 4: Security Audit ===
+  security-audit:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🔒 Audit backend dependencies
+        run: npm audit --audit-level=high || true
+        working-directory: ./agrovision-backend
+
+      - name: 🔒 Audit frontend dependencies
+        run: npm audit --audit-level=high || true
+        working-directory: ./client
