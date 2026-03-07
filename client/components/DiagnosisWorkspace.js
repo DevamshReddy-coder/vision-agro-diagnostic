@@ -113,7 +113,7 @@ export default function DiagnosisWorkspace() {
       } catch (err) {
         console.error("Diagnosis Error:", err);
       }
-      // Implement overall timeout fallback (25s) just in case WebSocket disconnects and we wait forever
+      // Implement overall timeout fallback (90s) just in case WebSocket disconnects, or Free Tier server is doing a Cold Start
       if (window.fallbackTimeout) clearTimeout(window.fallbackTimeout);
       window.fallbackTimeout = setTimeout(() => {
           // Check if there is already a result to prevent overwriting successful diagnoses
@@ -137,7 +137,7 @@ export default function DiagnosisWorkspace() {
                 insights: { spreadProbability: "Unknown", yieldImpact: "Unknown", environmentalFactor: "Offline mode active" }
             };
           });
-      }, 25000); // 25s total wait limit for inference
+      }, 90000); // 90s total wait limit for inference (allows for cold starts)
     };
 
     if (navigator.geolocation) {
