@@ -172,15 +172,15 @@ export default function Navbar({ onLoginClick }) {
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 className="hidden sm:flex items-center gap-2 border-2 border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-emerald-600 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-[0.15em] transition-all duration-300"
-                onClick={onLoginClick}
+                onClick={() => onLoginClick('login')}
               >
-                <User size={15} /> Sign In
+                <User size={15} /> Log In
               </motion.button>
               <motion.button 
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 className="bg-emerald-500 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-[0.15em] shadow-lg shadow-emerald-500/25 hover:bg-emerald-600 transition-all duration-300 h-fit"
-                onClick={onLoginClick}
+                onClick={() => onLoginClick('register')}
               >
                 Get Started
               </motion.button>
@@ -231,16 +231,16 @@ export default function Navbar({ onLoginClick }) {
                     className="py-4 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:border-emerald-400 hover:text-emerald-600 transition-all"
                     onClick={() => {
                         setIsMobileMenuOpen(false);
-                        if (onLoginClick) onLoginClick();
+                        if (onLoginClick) onLoginClick('login');
                     }}
                   >
-                    Sign In
+                    Log In
                   </button>
                   <button 
                     className="py-4 bg-emerald-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all"
                     onClick={() => {
                         setIsMobileMenuOpen(false);
-                        if (onLoginClick) onLoginClick();
+                        if (onLoginClick) onLoginClick('register');
                     }}
                   >
                     Get Started

@@ -33,12 +33,12 @@ const HowItWorks = dynamic(() => import('../components/HowItWorks'), { ssr: fals
 const Navbar = dynamic(() => import('../components/Navbar'), { ssr: false });
 
 export default function Home() {
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authScreen, setAuthScreen] = useState(null); // 'login' | 'register' | null
 
   return (
     <div className="min-h-screen selection:bg-primary selection:text-white bg-white">
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-      <Navbar onLoginClick={() => setIsAuthOpen(true)} />
+      <AuthModal isOpen={!!authScreen} initialScreen={authScreen || 'login'} onClose={() => setAuthScreen(null)} />
+      <Navbar onLoginClick={(type) => setAuthScreen(type)} />
 
       {/* Hero Section */}
       <section className="relative pt-12 lg:pt-16 pb-24 lg:pb-32 overflow-hidden bg-white">

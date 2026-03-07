@@ -377,7 +377,7 @@ const AuthModalContentUI = ({ onClose, screen, setScreen, error, setError, succe
 };
 
 // ─── Main AuthModal Component (The Wrapper) ──────────────────────────────────
-export default function AuthModal({ isOpen, onClose }) {
+export default function AuthModal({ isOpen, onClose, initialScreen }) {
   const [screen, setScreen] = useState('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -391,11 +391,11 @@ export default function AuthModal({ isOpen, onClose }) {
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
-      setScreen('login'); setError(''); setSuccess('');
+      setScreen(initialScreen || 'login'); setError(''); setSuccess('');
       setOtp(['', '', '', '', '', '']);
       setFormData({ name: '', phone: '', email: '', password: '', role: 'Farmer' });
     }
-  }, [isOpen]);
+  }, [isOpen, initialScreen]);
 
   // OTP countdown timer
   useEffect(() => {
