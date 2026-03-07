@@ -25,16 +25,10 @@ export class OtpService {
                 port: parseInt(process.env.REDIS_PORT || '6379'),
             });
         }
-
-        // Initialize Twilio client if credentials are set
-        const accountSid = process.env.TWILIO_ACCOUNT_SID;
-        const authToken = process.env.TWILIO_AUTH_TOKEN;
-        if (accountSid && authToken) {
-            const twilio = require('twilio');
-            this.twilioClient = twilio(accountSid, authToken);
-            this.logger.log('✅ Twilio SMS client initialized');
+        if (process.env.FAST2SMS_API_KEY) {
+            this.logger.log('✅ Fast2SMS API Key initialized');
         } else {
-            this.logger.warn('⚠️ Twilio credentials not found - OTP will be logged to console only (development mode)');
+            this.logger.warn('⚠️ Fast2SMS API Key not found - OTP will be logged to console only (development mode)');
         }
     }
 
@@ -64,15 +58,25 @@ export class OtpService {
         await this.redis.set(otpKey, otp, 'EX', 300); // 5 minutes TTL
         await this.redis.set(rateLimitKey, '1', 'EX', 60); // 60 second rate limit
 
-        if (this.twilioClient) {
-            // Send real SMS via Twilio
-            await this.twilioClient.messages.create({
-                body: `Your AgroVision AI verification code is: ${otp}. Valid for 5 minutes. Do not share this with anyone.`,
-                from: process.env.TWILIO_PHONE_NUMBER,
-                to: e164Phone,
-            });
-            this.logger.log(`📱 OTP sent via Twilio to ${e164Phone.slice(0, 6)}****`);
-            return { success: true };
+        if (process.env.FAST2SMS_API_KEY) {
+            try {
+                const fast2sms = require('fast-two-sms');
+                const response = await fast2sms.sendMessage({
+                    authorization: process.env.FAST2SMS_API_KEY,
+                    message: `Your AgroVision AI verification code is: ${otp}`,
+                    numbers: [normalizedPhone]
+                });
+
+                if (response.return === false) {
+                    throw new Error(response.message || 'Fast2SMS returned an error');
+                }
+
+                this.logger.log(`📱 OTP sent via Fast2SMS to ${e164Phone.slice(0, 6)}****`);
+                return { success: true };
+            } catch (err) {
+                this.logger.error(`Failed to send Fast2SMS OTP: ${err.message}`);
+                throw new BadRequestException('Failed to send real SMS. Please try again.');
+            }
         } else {
             // Development fallback: log to console
             this.logger.warn(`📱 [DEV MODE] OTP for ${e164Phone}: ${otp}`);
