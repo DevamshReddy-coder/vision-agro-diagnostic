@@ -41,6 +41,16 @@ export class AuthController {
         return this.authService.register(req);
     }
 
+    @Public()
+    @Post('google')
+    @ApiOperation({ summary: 'Authenticate using Google OAuth token' })
+    async googleLogin(@Body() body: { token: string }) {
+        if (!body.token) {
+            throw new HttpException('Missing Google ID token', HttpStatus.BAD_REQUEST);
+        }
+        return this.authService.googleLogin(body.token);
+    }
+
     @Post('logout')
     @ApiOperation({ summary: 'Invalidates session token' })
     async logout() {

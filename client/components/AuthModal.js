@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Mail, Lock, User, Phone, Shield, ArrowRight, AlertCircle, CheckCircle2, Fingerprint, Leaf, Eye, EyeOff, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 // Google Icon SVG component
 const GoogleIcon = () => (
@@ -74,111 +75,13 @@ const OtpInput = ({ otp, setOtp }) => {
   );
 };
 
-// ─── Main AuthModal Component ─────────────────────────────────────────────────
-export default function AuthModal({ isOpen, onClose }) {
-  // 'login' | 'register' | 'otp'
-  const [screen, setScreen] = useState('login');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [otpTimer, setOtpTimer] = useState(30);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    password: '',
-    role: 'Farmer',
-  });
-
-  // Reset state when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setScreen('login'); setError(''); setSuccess('');
-      setOtp(['', '', '', '', '', '']);
-      setFormData({ name: '', phone: '', email: '', password: '', role: 'Farmer' });
-    }
-  }, [isOpen]);
-
-  // OTP countdown timer
-  useEffect(() => {
-    if (screen !== 'otp') return;
-    setOtpTimer(30);
-    const t = setInterval(() => setOtpTimer(p => Math.max(0, p - 1)), 1000);
-    return () => clearInterval(t);
-  }, [screen]);
-
+// ─── Main Modal Content (Wrapped underneath so hooks work) ──────────────────
+const AuthModalContentUI = ({ onClose, screen, setScreen, error, setError, success, setSuccess, loading, setLoading, formData, setFormData, otp, setOtp, otpTimer, setOtpTimer, handleLogin, handleRegister, handleOtpVerify }) => {
+  const isRegister = screen === 'register';
+  const isOtp = screen === 'otp';
   const set = (key) => (e) => setFormData(f => ({ ...f, [key]: e.target.value }));
 
-  // ── Submit Login ──────────────────────────────────────────────────────────
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true); setError('');
-    try {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-      const res = await axios.post(`${base}/auth/login`, {
-        email: formData.email.toLowerCase().trim(),
-        password: formData.password,
-      });
-      const data = res.data;
-      localStorage.setItem('token', data.access_token || data.token);
-      localStorage.setItem('user', JSON.stringify(data.user || data));
-      setSuccess('Welcome back! Loading your workspace...');
-      setTimeout(() => { onClose(); window.location.reload(); }, 1200);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Incorrect email or password. Please try again.');
-    } finally { setLoading(false); }
-  };
-
-  // ── Submit Register ───────────────────────────────────────────────────────
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/\s/g, ''))) {
-      setError('Please enter a valid 10-digit mobile number.'); return;
-    }
-    setLoading(true); setError('');
-    try {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-      const res = await axios.post(`${base}/auth/register`, {
-        name: formData.name.trim(),
-        email: formData.email.toLowerCase().trim(),
-        password: formData.password,
-        phone: formData.phone,
-        role: formData.role,
-      });
-      const data = res.data;
-      localStorage.setItem('token', data.access_token || data.token);
-      localStorage.setItem('user', JSON.stringify(data.user || data));
-      setSuccess('Account created! Setting up your workspace...');
-      setTimeout(() => { onClose(); window.location.reload(); }, 1200);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. This email may already be registered.');
-    } finally { setLoading(false); }
-  };
-
-  // ── OTP Verify (calls real backend endpoint) ─────────────────────────────
-  const handleOtpVerify = async (e) => {
-    e.preventDefault();
-    const code = otp.join('');
-    if (code.length < 6) { setError('Please enter the complete 6-digit code.'); return; }
-    setLoading(true); setError('');
-    try {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-      await axios.post(`${base}/auth/otp/verify`, { phone: formData.phone, otp: code });
-      // OTP verified — now complete registration
-      await handleRegister({ preventDefault: () => {} });
-    } catch (err) {
-      setError(err.response?.data?.message || 'Incorrect or expired OTP. Try again.');
-      setLoading(false);
-    }
-  };
-
-  // ── Google Sign-In (stub — implement Google OAuth next) ──────────────────
-  const handleGoogleSignIn = () => {
-    setError('Google Sign-In is being configured. Please use email for now.');
-  };
-
-  // ── Send OTP (calls real backend API) ─────────────────────────────────────
+  // ── Send OTP ──────────────────────────────────────────────────────────────
   const handleSendOtp = async (phone) => {
     if (phone.length !== 10) { setError('Enter a valid 10-digit mobile number first.'); return; }
     setLoading(true); setError('');
@@ -186,23 +89,37 @@ export default function AuthModal({ isOpen, onClose }) {
       const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
       const res = await axios.post(`${base}/auth/otp/send`, { phone });
       setScreen('otp');
-      // In development mode, backend returns the OTP for testing
-      if (res.data.dev_otp) {
-        setError(`[DEV] Your OTP is: ${res.data.dev_otp}`);
-      }
+      if (res.data.dev_otp) setError(`[DEV] Your OTP is: ${res.data.dev_otp}`);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send OTP. Check your number and try again.');
     } finally { setLoading(false); }
   };
 
-  // ─────────────────────────────────────────────────────────────────────────
-  const isRegister = screen === 'register';
-  const isOtp = screen === 'otp';
+  // ── Google Server Auth ────────────────────────────────────────────────────
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true); setError('');
+    try {
+      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const res = await axios.post(`${base}/auth/google`, { token: credentialResponse.credential });
+      const data = res.data;
+      localStorage.setItem('token', data.access_token || data.token);
+      localStorage.setItem('user', JSON.stringify(data.user || data));
+      setSuccess('Google authorization successful! Loading workspace...');
+      setTimeout(() => { onClose(); window.location.reload(); }, 1200);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Google Auth failed on server.');
+      setLoading(false);
+    }
+  };
+  
+  const handleGoogleError = () => {
+    setError('Google Sign-In popup was closed or failed.');
+  };
 
+  // ─────────────────────────────────────────────────────────────────────────
   return (
     <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -300,13 +217,27 @@ export default function AuthModal({ isOpen, onClose }) {
               {!isOtp && !isRegister && (
                 <form onSubmit={handleLogin} className="space-y-4">
                   {/* Google SSO */}
-                  <button
-                    type="button"
-                    onClick={handleGoogleSignIn}
-                    className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border-2 border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm"
-                  >
-                    <GoogleIcon /> Continue with Google
-                  </button>
+                  <div className="flex justify-center mb-1">
+                    {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+                      <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={handleGoogleError}
+                        theme="outline"
+                        size="large"
+                        width="100%"
+                        text="continue_with"
+                        shape="pill"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setError('Google OAuth is not configured. Add NEXT_PUBLIC_GOOGLE_CLIENT_ID to your environment variables.')}
+                        className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border-2 border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm"
+                      >
+                        <GoogleIcon /> Continue with Google
+                      </button>
+                    )}
+                  </div>
 
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-px bg-slate-100" />
@@ -337,13 +268,27 @@ export default function AuthModal({ isOpen, onClose }) {
               {!isOtp && isRegister && (
                 <form onSubmit={handleRegister} className="space-y-3">
                   {/* Google SSO */}
-                  <button
-                    type="button"
-                    onClick={handleGoogleSignIn}
-                    className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border-2 border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm"
-                  >
-                    <GoogleIcon /> Sign up with Google
-                  </button>
+                  <div className="flex justify-center mb-1">
+                    {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+                      <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={handleGoogleError}
+                        theme="outline"
+                        size="large"
+                        width="100%"
+                        text="signup_with"
+                        shape="pill"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setError('Google OAuth is not configured. Add NEXT_PUBLIC_GOOGLE_CLIENT_ID to your environment variables.')}
+                        className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border-2 border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm"
+                      >
+                        <GoogleIcon /> Sign up with Google
+                      </button>
+                    )}
+                  </div>
 
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-px bg-slate-100" />
@@ -427,7 +372,114 @@ export default function AuthModal({ isOpen, onClose }) {
             </div>
           </motion.div>
         </div>
-      )}
     </AnimatePresence>
+  );
+};
+
+// ─── Main AuthModal Component (The Wrapper) ──────────────────────────────────
+export default function AuthModal({ isOpen, onClose }) {
+  const [screen, setScreen] = useState('login');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [otpTimer, setOtpTimer] = useState(30);
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [formData, setFormData] = useState({
+    name: '', phone: '', email: '', password: '', role: 'Farmer',
+  });
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setScreen('login'); setError(''); setSuccess('');
+      setOtp(['', '', '', '', '', '']);
+      setFormData({ name: '', phone: '', email: '', password: '', role: 'Farmer' });
+    }
+  }, [isOpen]);
+
+  // OTP countdown timer
+  useEffect(() => {
+    if (screen !== 'otp') return;
+    setOtpTimer(30);
+    const t = setInterval(() => setOtpTimer(p => Math.max(0, p - 1)), 1000);
+    return () => clearInterval(t);
+  }, [screen]);
+
+  // ── Submit Login ──────────────────────────────────────────────────────────
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    try {
+      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const res = await axios.post(`${base}/auth/login`, {
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password,
+      });
+      const data = res.data;
+      localStorage.setItem('token', data.access_token || data.token);
+      localStorage.setItem('user', JSON.stringify(data.user || data));
+      setSuccess('Welcome back! Loading your workspace...');
+      setTimeout(() => { onClose(); window.location.reload(); }, 1200);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Incorrect email or password. Please try again.');
+    } finally { setLoading(false); }
+  };
+
+  // ── Submit Register ───────────────────────────────────────────────────────
+  const handleRegister = async (e) => {
+    if (e?.preventDefault) e.preventDefault();
+    if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/\s/g, ''))) {
+      setError('Please enter a valid 10-digit mobile number.'); return;
+    }
+    setLoading(true); setError('');
+    try {
+      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const res = await axios.post(`${base}/auth/register`, {
+        name: formData.name.trim(),
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password,
+        phone: formData.phone,
+        role: formData.role,
+      });
+      const data = res.data;
+      localStorage.setItem('token', data.access_token || data.token);
+      localStorage.setItem('user', JSON.stringify(data.user || data));
+      setSuccess('Account created! Setting up your workspace...');
+      setTimeout(() => { onClose(); window.location.reload(); }, 1200);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Registration failed. This email may already be registered.');
+    } finally { setLoading(false); }
+  };
+
+  // ── OTP Verify ───────────────────────────────────────────────────────────
+  const handleOtpVerify = async (e) => {
+    e.preventDefault();
+    const code = otp.join('');
+    if (code.length < 6) { setError('Please enter the complete 6-digit code.'); return; }
+    setLoading(true); setError('');
+    try {
+      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      await axios.post(`${base}/auth/otp/verify`, { phone: formData.phone, otp: code });
+      await handleRegister(e);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Incorrect or expired OTP. Try again.');
+      setLoading(false);
+    }
+  };
+
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'dummy-client-id';
+
+  if (!isOpen) return null;
+
+  return (
+    <GoogleOAuthProvider clientId={clientId}>
+      <AuthModalContentUI 
+        onClose={onClose} screen={screen} setScreen={setScreen} 
+        error={error} setError={setError} success={success} setSuccess={setSuccess}
+        loading={loading} setLoading={setLoading} formData={formData} setFormData={setFormData}
+        otp={otp} setOtp={setOtp} otpTimer={otpTimer} setOtpTimer={setOtpTimer}
+        handleLogin={handleLogin} handleRegister={handleRegister} handleOtpVerify={handleOtpVerify}
+      />
+    </GoogleOAuthProvider>
   );
 }

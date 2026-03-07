@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/co
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
@@ -43,5 +44,39 @@ export class AuthService {
                 role: user.role,
             }
         };
+    }
+
+    async googleLogin(token: string) {
+        if (!process.env.GOOGLE_CLIENT_ID) {
+            throw new UnauthorizedException('Google OAuth is not configured on this server.');
+        }
+
+        const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+        try {
+            const ticket = await client.verifyIdToken({
+                idToken: token,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+            const payload = ticket.getPayload();
+            if (!payload || !payload.email) {
+                throw new UnauthorizedException('Invalid Google token payload');
+            }
+
+            let user = await this.usersService.findByEmail(payload.email);
+            if (!user) {
+                // Auto-register the Google user
+                user = await this.usersService.create({
+                    name: payload.name || 'Google User',
+                    email: payload.email,
+                    passwordHash: await bcrypt.hash(crypto.randomUUID(), 10), // Random locked password
+                    role: 'Farmer', // Default role for OAuth
+                });
+            }
+
+            return this.login(user);
+        } catch (error) {
+            console.error('[Google OAuth Error]:', error);
+            throw new UnauthorizedException('Google authentication failed');
+        }
     }
 }
