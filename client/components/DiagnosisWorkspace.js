@@ -31,6 +31,7 @@ export default function DiagnosisWorkspace() {
        if (data.status === 'PROCESSING') {
           setInferenceProgress(data.progress || 10);
        } else if (data.status === 'COMPLETED') {
+          if (window.fallbackTimeout) clearTimeout(window.fallbackTimeout);
           // Finish loading and show data
           setResult({
             disease: data.result.disease || "Unknown Anomaly",
@@ -111,37 +112,42 @@ export default function DiagnosisWorkspace() {
         setInferenceProgress(5); 
       } catch (err) {
         console.error("Diagnosis Error:", err);
-        setTimeout(() => {
-          if (loading) {
-              setResult({
-                  disease: "Network Error - Offline Fallback",
-                  crop: cropType,
-                  confidence: 50.0,
-                  severity: "Unknown",
-                  riskLevel: "Unknown",
-                  affectedAreaPercent: 0,
-                  xai_visualization: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=1000",
-                  recommendations: {
-                      pesticides: [],
-                      organic: [],
-                      prevention: ["Check server connection"]
-                  },
-                  insights: { spreadProbability: "Unknown", yieldImpact: "Unknown", environmentalFactor: "Offline mode active" }
-              });
-              setLoading(false);
-          }
-        }, 10000);
       }
+      // Implement overall timeout fallback (25s) just in case WebSocket disconnects and we wait forever
+      if (window.fallbackTimeout) clearTimeout(window.fallbackTimeout);
+      window.fallbackTimeout = setTimeout(() => {
+          // Check if there is already a result to prevent overwriting successful diagnoses
+          setResult(prev => {
+            if (prev) return prev;
+            setLoading(false);
+            setInferenceProgress(null);
+            return {
+                disease: "Network Error - Offline Fallback",
+                crop: cropType,
+                confidence: 50.0,
+                severity: "Unknown",
+                riskLevel: "Unknown",
+                affectedAreaPercent: 0,
+                xai_visualization: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=1000",
+                recommendations: {
+                    pesticides: [],
+                    organic: [],
+                    prevention: ["Check server connection"]
+                },
+                insights: { spreadProbability: "Unknown", yieldImpact: "Unknown", environmentalFactor: "Offline mode active" }
+            };
+          });
+      }, 25000); // 25s total wait limit for inference
     };
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => executeDiagnosis(position.coords.latitude, position.coords.longitude),
         (error) => {
-          console.log("Geolocation denied or failed, proceeding without weather context.");
+          console.log("Geolocation denied, proceeding instantly without weather context.");
           executeDiagnosis();
         },
-        { timeout: 5000 }
+        { enableHighAccuracy: false, timeout: 2500, maximumAge: Infinity } // Make location fetch practically instant using cache
       );
     } else {
       executeDiagnosis();
