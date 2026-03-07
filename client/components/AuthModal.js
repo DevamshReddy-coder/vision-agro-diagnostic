@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useRef, useEffect } from 'react';
-import { X, Mail, Lock, User, Phone, Shield, ArrowRight, AlertCircle, CheckCircle2, Fingerprint, Leaf, Eye, EyeOff, ChevronLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle2, Leaf, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
@@ -43,57 +43,10 @@ const InputField = ({ icon: Icon, type = 'text', placeholder, value, onChange, r
   );
 };
 
-// ─── OTP Input Grid ───────────────────────────────────────────────────────────
-const OtpInput = ({ otp, setOtp }) => {
-  const refs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
-  const handleChange = (e, i) => {
-    const val = e.target.value.replace(/\D/, '');
-    const next = [...otp];
-    next[i] = val;
-    setOtp(next);
-    if (val && i < 5) refs[i + 1].current?.focus();
-  };
-  const handleKeyDown = (e, i) => {
-    if (e.key === 'Backspace' && !otp[i] && i > 0) refs[i - 1].current?.focus();
-  };
-  return (
-    <div className="flex gap-2 justify-center">
-      {otp.map((digit, i) => (
-        <input
-          key={i}
-          ref={refs[i]}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={digit}
-          onChange={(e) => handleChange(e, i)}
-          onKeyDown={(e) => handleKeyDown(e, i)}
-          className="w-12 h-14 text-center text-xl font-black rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-emerald-400 focus:bg-white focus:shadow-[0_0_0_4px_rgba(16,185,129,0.08)] outline-none text-slate-800 transition-all duration-200"
-        />
-      ))}
-    </div>
-  );
-};
-
 // ─── Main Modal Content (Wrapped underneath so hooks work) ──────────────────
-const AuthModalContentUI = ({ onClose, screen, setScreen, error, setError, success, setSuccess, loading, setLoading, formData, setFormData, otp, setOtp, otpTimer, setOtpTimer, handleLogin, handleRegister, handleOtpVerify }) => {
+const AuthModalContentUI = ({ onClose, screen, setScreen, error, setError, success, setSuccess, loading, setLoading, formData, setFormData, handleLogin, handleRegister }) => {
   const isRegister = screen === 'register';
-  const isOtp = screen === 'otp';
   const set = (key) => (e) => setFormData(f => ({ ...f, [key]: e.target.value }));
-
-  // ── Send OTP ──────────────────────────────────────────────────────────────
-  const handleSendOtp = async (phone) => {
-    if (phone.length !== 10) { setError('Enter a valid 10-digit mobile number first.'); return; }
-    setLoading(true); setError('');
-    try {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-      const res = await axios.post(`${base}/auth/otp/send`, { phone });
-      setScreen('otp');
-      if (res.data.dev_otp) setError(`[DEV] Your OTP is: ${res.data.dev_otp}`);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send OTP. Check your number and try again.');
-    } finally { setLoading(false); }
-  };
 
   // ── Google Server Auth ────────────────────────────────────────────────────
   const handleGoogleSuccess = async (credentialResponse) => {
@@ -140,13 +93,6 @@ const AuthModalContentUI = ({ onClose, screen, setScreen, error, setError, succe
               <div className="absolute -top-8 -right-8 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl" />
               <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-400/5 rounded-full blur-xl" />
 
-              {/* Back button for OTP screen */}
-              {isOtp && (
-                <button onClick={() => setScreen('register')} className="absolute top-5 left-6 text-slate-400 hover:text-white transition-colors flex items-center gap-1 text-xs font-semibold">
-                  <ChevronLeft size={16} /> Back
-                </button>
-              )}
-
               {/* Close button */}
               <button onClick={onClose} className="absolute top-5 right-6 text-slate-400 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-full">
                 <X size={18} />
@@ -162,12 +108,10 @@ const AuthModalContentUI = ({ onClose, screen, setScreen, error, setError, succe
 
               <div className="relative z-10">
                 <h2 className="text-white font-black text-3xl leading-tight tracking-tight">
-                  {isOtp ? 'Verify Your\nPhone' : isRegister ? 'Create Account' : 'Welcome Back'}
+                  {isRegister ? 'Create Account' : 'Welcome Back'}
                 </h2>
                 <p className="text-slate-400 text-sm mt-2 font-medium">
-                  {isOtp
-                    ? `Enter the 6-digit code sent to +91 ${formData.phone.slice(-4).padStart(10, '•')}`
-                    : isRegister
+                  {isRegister
                     ? 'Join the global agricultural intelligence network'
                     : 'Sign in to access your AI diagnostic dashboard'}
                 </p>
@@ -192,29 +136,8 @@ const AuthModalContentUI = ({ onClose, screen, setScreen, error, setError, succe
                 )}
               </AnimatePresence>
 
-              {/* ─── OTP Screen ─── */}
-              {isOtp && (
-                <form onSubmit={handleOtpVerify} className="space-y-6">
-                  <OtpInput otp={otp} setOtp={setOtp} />
-                  <p className="text-center text-xs text-slate-400">
-                    {otpTimer > 0 ? (
-                      <>Resend code in <span className="font-black text-slate-700">{otpTimer}s</span></>
-                    ) : (
-                      <button type="button" onClick={() => setOtpTimer(30)} className="font-black text-emerald-600 hover:underline">Resend OTP</button>
-                    )}
-                  </p>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-sm tracking-wide shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-3 disabled:opacity-60"
-                  >
-                    {loading ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Verifying...</> : <><Shield size={18} /> Verify & Create Account</>}
-                  </button>
-                </form>
-              )}
-
               {/* ─── Login Screen ─── */}
-              {!isOtp && !isRegister && (
+              {!isRegister && (
                 <form onSubmit={handleLogin} className="space-y-4">
                   {/* Google SSO */}
                   <div className="flex justify-center mb-1">
@@ -265,7 +188,7 @@ const AuthModalContentUI = ({ onClose, screen, setScreen, error, setError, succe
               )}
 
               {/* ─── Register Screen ─── */}
-              {!isOtp && isRegister && (
+              {isRegister && (
                 <form onSubmit={handleRegister} className="space-y-3">
                   {/* Google SSO */}
                   <div className="flex justify-center mb-1">
@@ -297,31 +220,6 @@ const AuthModalContentUI = ({ onClose, screen, setScreen, error, setError, succe
                   </div>
 
                   <InputField icon={User} placeholder="Full name" value={formData.name} onChange={set('name')} required />
-
-                  {/* Phone number row with send OTP */}
-                  <div className="relative flex gap-2">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none z-10">
-                      <Phone size={18} />
-                    </div>
-                    <input
-                      type="tel"
-                      placeholder="Mobile number (10 digits)"
-                      value={formData.phone}
-                      onChange={set('phone')}
-                      maxLength={10}
-                      className="flex-1 pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:border-emerald-400 focus:bg-white outline-none text-sm font-medium text-slate-800 placeholder:text-slate-400 transition-all"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleSendOtp(formData.phone)}
-                      disabled={loading}
-                      className="shrink-0 px-4 py-2 bg-emerald-500 text-white text-xs font-black rounded-xl hover:bg-emerald-600 transition-colors shadow-md shadow-emerald-500/20 whitespace-nowrap disabled:opacity-60 flex items-center gap-1"
-                    >
-                      {loading ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
-                      Send OTP
-                    </button>
-                  </div>
-
                   <InputField icon={Mail} type="email" placeholder="Email address" value={formData.email} onChange={set('email')} required />
                   <InputField icon={Lock} type="password" placeholder="Create password (min 8 chars)" value={formData.password} onChange={set('password')} required />
 
@@ -358,17 +256,15 @@ const AuthModalContentUI = ({ onClose, screen, setScreen, error, setError, succe
               )}
 
               {/* ─── Toggle ─── */}
-              {!isOtp && (
-                <p className="text-center text-sm text-slate-500 mt-6">
-                  {isRegister ? 'Already have an account? ' : "Don't have an account? "}
-                  <button
-                    onClick={() => { setScreen(isRegister ? 'login' : 'register'); setError(''); setSuccess(''); }}
-                    className="font-black text-emerald-600 hover:underline"
-                  >
-                    {isRegister ? 'Sign In' : 'Sign Up'}
-                  </button>
-                </p>
-              )}
+              <p className="text-center text-sm text-slate-500 mt-6">
+                {isRegister ? 'Already have an account? ' : "Don't have an account? "}
+                <button
+                  onClick={() => { setScreen(isRegister ? 'login' : 'register'); setError(''); setSuccess(''); }}
+                  className="font-black text-emerald-600 hover:underline"
+                >
+                  {isRegister ? 'Sign In' : 'Sign Up'}
+                </button>
+              </p>
             </div>
           </motion.div>
         </div>
@@ -382,28 +278,17 @@ export default function AuthModal({ isOpen, onClose, initialScreen }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [otpTimer, setOtpTimer] = useState(30);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [formData, setFormData] = useState({
-    name: '', phone: '', email: '', password: '', role: 'Farmer',
+    name: '', email: '', password: '', role: 'Farmer',
   });
 
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
       setScreen(initialScreen || 'login'); setError(''); setSuccess('');
-      setOtp(['', '', '', '', '', '']);
-      setFormData({ name: '', phone: '', email: '', password: '', role: 'Farmer' });
+      setFormData({ name: '', email: '', password: '', role: 'Farmer' });
     }
   }, [isOpen, initialScreen]);
-
-  // OTP countdown timer
-  useEffect(() => {
-    if (screen !== 'otp') return;
-    setOtpTimer(30);
-    const t = setInterval(() => setOtpTimer(p => Math.max(0, p - 1)), 1000);
-    return () => clearInterval(t);
-  }, [screen]);
 
   // ── Submit Login ──────────────────────────────────────────────────────────
   const handleLogin = async (e) => {
@@ -428,9 +313,6 @@ export default function AuthModal({ isOpen, onClose, initialScreen }) {
   // ── Submit Register ───────────────────────────────────────────────────────
   const handleRegister = async (e) => {
     if (e?.preventDefault) e.preventDefault();
-    if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/\s/g, ''))) {
-      setError('Please enter a valid 10-digit mobile number.'); return;
-    }
     setLoading(true); setError('');
     try {
       const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
@@ -438,7 +320,6 @@ export default function AuthModal({ isOpen, onClose, initialScreen }) {
         name: formData.name.trim(),
         email: formData.email.toLowerCase().trim(),
         password: formData.password,
-        phone: formData.phone,
         role: formData.role,
       });
       const data = res.data;
@@ -451,22 +332,6 @@ export default function AuthModal({ isOpen, onClose, initialScreen }) {
     } finally { setLoading(false); }
   };
 
-  // ── OTP Verify ───────────────────────────────────────────────────────────
-  const handleOtpVerify = async (e) => {
-    e.preventDefault();
-    const code = otp.join('');
-    if (code.length < 6) { setError('Please enter the complete 6-digit code.'); return; }
-    setLoading(true); setError('');
-    try {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-      await axios.post(`${base}/auth/otp/verify`, { phone: formData.phone, otp: code });
-      await handleRegister(e);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Incorrect or expired OTP. Try again.');
-      setLoading(false);
-    }
-  };
-
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'dummy-client-id';
 
   if (!isOpen) return null;
@@ -477,8 +342,7 @@ export default function AuthModal({ isOpen, onClose, initialScreen }) {
         onClose={onClose} screen={screen} setScreen={setScreen} 
         error={error} setError={setError} success={success} setSuccess={setSuccess}
         loading={loading} setLoading={setLoading} formData={formData} setFormData={setFormData}
-        otp={otp} setOtp={setOtp} otpTimer={otpTimer} setOtpTimer={setOtpTimer}
-        handleLogin={handleLogin} handleRegister={handleRegister} handleOtpVerify={handleOtpVerify}
+        handleLogin={handleLogin} handleRegister={handleRegister}
       />
     </GoogleOAuthProvider>
   );
