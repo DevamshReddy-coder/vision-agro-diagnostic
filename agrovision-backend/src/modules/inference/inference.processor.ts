@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { DiagnosticReport, DiagnosticStatus } from './entities/diagnostic-report.entity';
 import { TelemetryGateway } from '../../gateway/telemetry.gateway';
 import { GoogleGenAI } from '@google/genai';
+import axios from 'axios';
 
 @Processor('inference_queue')
 @Injectable()
@@ -28,9 +29,32 @@ export class InferenceProcessor extends WorkerHost {
         // Emit real-time status update to frontend
         this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 10 });
 
-        const { base64Image, mimeType } = job.data;
+        const { base64Image, mimeType, lat, lon } = job.data;
         let finalOutput: any = null;
         const apiKey = process.env.GEMINI_API_KEY || '';
+
+        // --- FETCH REAL-TIME ENVIRONMENTAL DATA (OPEN-METEO) ---
+        let weatherContext = "Real-time weather data unavailable (no coordinates provided).";
+        if (lat && lon) {
+            try {
+                this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 20 });
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+                const weatherRes = await axios.get(weatherUrl);
+                const current = weatherRes.data.current;
+                const daily = weatherRes.data.daily;
+                weatherContext = `LOCAL WEATHER AND FORECAST FOR COORDINATES (${lat}, ${lon}):
+- Current Conditions: Temperature ${current.temperature_2m}°C, Humidity ${current.relative_humidity_2m}%, Precipitation ${current.precipitation}mm
+- Next 3 Days Forecast: 
+  Day 1: ${daily.temperature_2m_max[1]}°C max, ${daily.precipitation_sum[1]}mm rain
+  Day 2: ${daily.temperature_2m_max[2]}°C max, ${daily.precipitation_sum[2]}mm rain
+  Day 3: ${daily.temperature_2m_max[3]}°C max, ${daily.precipitation_sum[3]}mm rain
+`;
+                console.log(`[Diagnostic Lab] Live Weather Integrated for Neural Inference: ${current.temperature_2m}°C, ${current.relative_humidity_2m}% HR`);
+            } catch (err) {
+                console.error("[AI Worker] Failed to fetch weather data from Open-Meteo", err.message);
+                weatherContext = "Real-time weather data unavailable (fetch failed).";
+            }
+        }
 
         // --- REAL-TIME MULTIMODAL PLANT DISEASE ANALYSIS ENGINE ---
         if (base64Image && apiKey) {
@@ -39,6 +63,8 @@ export class InferenceProcessor extends WorkerHost {
                 const ai = new GoogleGenAI({ apiKey });
 
                 const promptString = `You are an advanced AgroVision AI Intelligence Engine designed to power a real-time agricultural diagnostic system called "A Vision-Driven Agro Diagnostic Framework Using Machine Learning." Your role is to function as a professional digital agronomist capable of combining computer vision analysis, environmental intelligence, and agronomic knowledge to diagnose crop diseases and forecast potential disease outbreaks based on environmental conditions.
+
+${weatherContext}
 
 When a user uploads a crop image, you must first analyze the image to identify the crop species by examining visual characteristics such as leaf morphology, venation pattern, texture, pigmentation, and structural plant features. You must return the crop name, scientific name, and a confidence score. If the crop cannot be identified with sufficient certainty, respond that the crop identification is uncertain and request a clearer or closer image rather than guessing.
 

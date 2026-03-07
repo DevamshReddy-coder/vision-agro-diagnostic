@@ -1,6 +1,6 @@
 import {
     Controller, Post, Get, Param, UploadedFile,
-    UseInterceptors, HttpCode, HttpStatus, BadRequestException, Request
+    UseInterceptors, HttpCode, HttpStatus, BadRequestException, Request, Body
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { InferenceService } from './inference.service';
@@ -26,6 +26,7 @@ export class InferenceController {
     async submitAnalysis(
         @UploadedFile() file: Express.Multer.File,
         @CurrentUser() user: any,
+        @Body() body: any,
     ) {
         // 1. Validate file is present
         if (!file) {
@@ -48,15 +49,18 @@ export class InferenceController {
 
         const base64Image = file.buffer.toString('base64');
         const mimeType = file.mimetype;
+        const lat = body.lat;
+        const lon = body.lon;
 
         console.log(`[Diagnostic Lab] Received specimen: ${file.originalname} (${(file.size / 1024).toFixed(0)}KB, ${mimeType}) from user ${user?.sub || 'anonymous'}`);
+        if (lat && lon) console.log(`[Diagnostic Lab] Live Geolocation captured: Lat ${lat}, Lon ${lon}`);
 
         // 4. Use real authenticated user ID from JWT payload
         const userId = user?.sub || crypto.randomUUID();
         const mockS3Url = `https://s3.agrovision.ai/specimens/${userId}/${Date.now()}-${file.originalname}`;
 
         // 5. Queue the job
-        const report = await this.inferenceService.submitAnalysisJob(userId, mockS3Url, base64Image, mimeType);
+        const report = await this.inferenceService.submitAnalysisJob(userId, mockS3Url, base64Image, mimeType, lat, lon);
 
         return {
             message: 'Specimen accepted. Neural analysis pipeline initiated.',

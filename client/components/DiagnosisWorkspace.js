@@ -88,45 +88,63 @@ export default function DiagnosisWorkspace() {
     formData.append('image', image);
     formData.append('cropType', cropType);
 
-    try {
-      const token = localStorage.getItem('token');
-      const config = {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      };
-      
-      // 1. Submit to new async endpoint
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-      const res = await axios.post(`${baseUrl}/inference/analyze`, formData, config);
-      
-      // 2. We now wait for the websocket to return 'COMPLETED'. We do not setLoading(false) here!
-      console.log("Async job queued. Report tracking ID:", res.data.reportId);
-      setInferenceProgress(5); // Initial processing state
+    const executeDiagnosis = async (lat = null, lon = null) => {
+      if (lat && lon) {
+        formData.append('lat', lat);
+        formData.append('lon', lon);
+      }
 
-    } catch (err) {
-      console.error("Diagnosis Error:", err);
-      // Wait to see if WebSocket is connected and returns something, otherwise fallback
-      setTimeout(() => {
-        if (loading) {
-            setResult({
-                disease: "Network Error - Offline Fallback",
-                crop: cropType,
-                confidence: 50.0,
-                severity: "Unknown",
-                riskLevel: "Unknown",
-                affectedAreaPercent: 0,
-                xai_visualization: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=1000",
-                recommendations: {
-                    pesticides: [],
-                    organic: [],
-                    prevention: ["Check server connection"]
-                },
-                insights: { spreadProbability: "Unknown", yieldImpact: "Unknown", environmentalFactor: "Offline mode active" }
-            });
-            setLoading(false);
-        }
-      }, 10000); // Only fallback if real response takes >10s
+      try {
+        const token = localStorage.getItem('token');
+        const config = {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        };
+        
+        // 1. Submit to new async endpoint
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+        const res = await axios.post(`${baseUrl}/inference/analyze`, formData, config);
+        
+        // 2. Wait for websocket response
+        console.log("Async job queued. Report tracking ID:", res.data.reportId);
+        setInferenceProgress(5); 
+      } catch (err) {
+        console.error("Diagnosis Error:", err);
+        setTimeout(() => {
+          if (loading) {
+              setResult({
+                  disease: "Network Error - Offline Fallback",
+                  crop: cropType,
+                  confidence: 50.0,
+                  severity: "Unknown",
+                  riskLevel: "Unknown",
+                  affectedAreaPercent: 0,
+                  xai_visualization: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=1000",
+                  recommendations: {
+                      pesticides: [],
+                      organic: [],
+                      prevention: ["Check server connection"]
+                  },
+                  insights: { spreadProbability: "Unknown", yieldImpact: "Unknown", environmentalFactor: "Offline mode active" }
+              });
+              setLoading(false);
+          }
+        }, 10000);
+      }
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => executeDiagnosis(position.coords.latitude, position.coords.longitude),
+        (error) => {
+          console.log("Geolocation denied or failed, proceeding without weather context.");
+          executeDiagnosis();
+        },
+        { timeout: 5000 }
+      );
+    } else {
+      executeDiagnosis();
     }
   };
 
