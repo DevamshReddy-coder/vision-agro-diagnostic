@@ -240,9 +240,10 @@ export default function AgriBot({ context }) {
       const formData = new FormData();
       formData.append('image', file);
       formData.append('cropType', 'Auto-Detect');
-
+      
+      const token = localStorage.getItem('token');
       const analyzeRes = await axios.post(`${baseUrl}/inference/analyze`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       
       const diagnosisData = analyzeRes.data.fullResult || analyzeRes.data;

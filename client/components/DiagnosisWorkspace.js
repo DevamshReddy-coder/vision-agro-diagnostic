@@ -113,16 +113,11 @@ export default function DiagnosisWorkspace() {
 
       try {
         const token = localStorage.getItem('token');
-        const config = {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        };
-        
-        // 1. Submit to new async endpoint
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
         setInferenceProgress(20); 
-        const res = await axios.post(`${baseUrl}/inference/analyze`, formData, config);
+        const res = await axios.post(`${baseUrl}/inference/analyze`, formData, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
         
         console.log("Analysis completed. Report tracking ID:", res.data.reportId);
         setInferenceProgress(95); 
