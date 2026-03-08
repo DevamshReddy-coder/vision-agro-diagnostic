@@ -223,13 +223,13 @@ ${context ? `[CURRENT DIAGNOSTIC/ENVIRONMENT CONTEXT]: ${JSON.stringify(context)
                     {
                         role: 'user',
                         parts: [
-                            { text: systemPrompt },
-                            { text: `[USER MESSAGE]: ${message}` }
+                            { text: message }
                         ]
                     }
                 ],
                 config: {
-                    temperature: 0.3
+                    temperature: 0.3,
+                    systemInstruction: systemPrompt
                 }
             });
 
