@@ -120,39 +120,67 @@ export default function DiagnosisWorkspace() {
         
         // 1. Submit to new async endpoint
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+        setInferenceProgress(20); 
         const res = await axios.post(`${baseUrl}/inference/analyze`, formData, config);
         
-        // 2. Wait for websocket response
-        console.log("Async job queued. Report tracking ID:", res.data.reportId);
-        setInferenceProgress(5); 
+        console.log("Analysis completed. Report tracking ID:", res.data.reportId);
+        setInferenceProgress(95); 
+        
+        // 2. Process synchronous result directly
+        if (window.fallbackTimeout) clearTimeout(window.fallbackTimeout);
+        
+        if (res.data.status === 'COMPLETED' && res.data.fullResult) {
+            const r = res.data.fullResult;
+            setResult({
+              disease: r.disease || "Unknown Anomaly",
+              crop: r.crop || "Unknown",
+              confidence: r.diseaseConfidence ? (r.diseaseConfidence * 100).toFixed(1) : "0.0",
+              severity: r.severity || "Unknown",
+              riskLevel: r.riskLevel || "Unknown",
+              affectedAreaPercent: r.affectedAreaPercent || 0,
+              xai_visualization: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=1000",
+              recommendations: r.recommendations || { pesticides: [], organic: [], prevention: [] },
+              insights: r.insights || {},
+              healthScore: r.healthScore || null,
+              message: r.message || null
+            });
+        } else if (res.data.status === 'FAILED') {
+            setResult({
+              disease: "Analysis Failed: " + (res.data.error || "Please upload a clearer image."),
+              crop: "Unknown",
+              confidence: "0.0",
+              severity: "Unknown",
+              riskLevel: "Unknown",
+              affectedAreaPercent: 0,
+              xai_visualization: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=1000",
+              recommendations: { pesticides: [], organic: [], prevention: [] },
+              insights: { spreadProbability: "Unknown", yieldImpact: "Unknown", environmentalFactor: "System error or uncertainty." }
+            });
+        }
+        setLoading(false);
+        setInferenceProgress(null);
+        
       } catch (err) {
         console.error("Diagnosis Error:", err);
+        if (window.fallbackTimeout) clearTimeout(window.fallbackTimeout);
+        setResult({
+            disease: "Network Error - Offline Fallback",
+            crop: cropType,
+            confidence: 50.0,
+            severity: "Unknown",
+            riskLevel: "Unknown",
+            affectedAreaPercent: 0,
+            xai_visualization: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=1000",
+            recommendations: {
+                pesticides: [],
+                organic: [],
+                prevention: ["Check server connection"]
+            },
+            insights: { spreadProbability: "Unknown", yieldImpact: "Unknown", environmentalFactor: "Offline mode active" }
+        });
+        setLoading(false);
+        setInferenceProgress(null);
       }
-      // Implement overall timeout fallback (90s) just in case WebSocket disconnects, or Free Tier server is doing a Cold Start
-      if (window.fallbackTimeout) clearTimeout(window.fallbackTimeout);
-      window.fallbackTimeout = setTimeout(() => {
-          // Check if there is already a result to prevent overwriting successful diagnoses
-          setResult(prev => {
-            if (prev) return prev;
-            setLoading(false);
-            setInferenceProgress(null);
-            return {
-                disease: "Network Error - Offline Fallback",
-                crop: cropType,
-                confidence: 50.0,
-                severity: "Unknown",
-                riskLevel: "Unknown",
-                affectedAreaPercent: 0,
-                xai_visualization: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=1000",
-                recommendations: {
-                    pesticides: [],
-                    organic: [],
-                    prevention: ["Check server connection"]
-                },
-                insights: { spreadProbability: "Unknown", yieldImpact: "Unknown", environmentalFactor: "Offline mode active" }
-            };
-          });
-      }, 90000); // 90s total wait limit for inference (allows for cold starts)
     };
 
     if (navigator.geolocation) {

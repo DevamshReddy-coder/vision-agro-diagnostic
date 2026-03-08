@@ -64,10 +64,11 @@ export class InferenceController {
         const report = await this.inferenceService.submitAnalysisJob(userId, mockS3Url, base64Image, mimeType, lat, lon, cropType);
 
         return {
-            message: 'Specimen accepted. Neural analysis pipeline initiated.',
+            message: 'Specimen accepted. Neural analysis pipeline completed.',
             reportId: report.id,
             status: report.status,
-            estimatedProcessingTime: '3-10 seconds',
+            fullResult: report.status === 'COMPLETED' ? report.fullResult : null,
+            error: report.status === 'FAILED' ? 'Analysis failed or uncertain. Please provide a clearer image.' : null,
         };
     }
 

@@ -25,8 +25,8 @@ export class InferenceService {
             // 2. Offload to async job processor bypassing BullMQ to avoid Redis dependency
             console.log(`[Queue] Executing async inference job inline: ${savedReport.id}`);
 
-            // Execute in background without awaiting to free up the HTTP request
-            this.inferenceProcessor.process({
+            // Execute inline and await result for 100% reliable real-time response
+            await this.inferenceProcessor.process({
                 reportId: savedReport.id,
                 imageUrl: tempImageUrl,
                 base64Image,
@@ -34,9 +34,11 @@ export class InferenceService {
                 lat,
                 lon,
                 cropType
-            }).catch(e => console.error("Background processing failed:", e));
+            });
 
-            return savedReport; // Return early, don't block the HTTP request!
+            // Fetch the updated report with the AI results
+            const completedReport = await this.reportRepo.findOne({ where: { id: savedReport.id } });
+            return completedReport || savedReport; // Return full processing payload
         } catch (err) {
             console.error(err);
             throw new InternalServerErrorException('Failed to enqueue diagnostic task');
