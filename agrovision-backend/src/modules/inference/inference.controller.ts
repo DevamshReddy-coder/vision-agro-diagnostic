@@ -17,6 +17,7 @@ const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB hard limit
 export class InferenceController {
     constructor(private readonly inferenceService: InferenceService) { }
 
+    @Public()
     @Post('analyze')
     @HttpCode(HttpStatus.ACCEPTED)
     @ApiOperation({ summary: 'Submit high-res crop specimen for neural mapping (Async job)' })
