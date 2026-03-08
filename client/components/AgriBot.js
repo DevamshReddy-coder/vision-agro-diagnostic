@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Volume2, VolumeX, Send, Bot, User, X, Loader2, Globe } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, Send, Bot, User, X, Loader2, Globe, Camera } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 
@@ -29,6 +29,7 @@ export default function AgriBot({ context }) {
   const synthRef = useRef(typeof window !== 'undefined' ? window.speechSynthesis : null);
   const messagesEndRef = useRef(null);
   const finalTranscriptRef = useRef('');
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -222,6 +223,54 @@ export default function AgriBot({ context }) {
     }
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Show image preview in chat
+    const imageUrl = URL.createObjectURL(file);
+    const userMessage = { role: 'user', text: `📸 Uploaded: ${file.name}`, image: imageUrl };
+    setMessages((prev) => [...prev, userMessage]);
+    setIsProcessing(true);
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+
+      // 1. Send image to pipeline
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('cropType', 'Auto-Detect');
+
+      const analyzeRes = await axios.post(`${baseUrl}/inference/analyze`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      const diagnosisData = analyzeRes.data.fullResult || analyzeRes.data;
+
+      // 2. Fetch conversational context and treatment
+      const systemPromptPayload = `I just uploaded an image of my crop. Here is the raw AI diagnostic lab report: ${JSON.stringify(diagnosisData)}. Please explain this to me clearly. Mention the crop name, disease name, severity, confidence, causes, and step-by-step treatment recommendations (chemical and organic) in my selected language strictly.`;
+
+      const chatRes = await axios.post(`${baseUrl}/inference/chat`, {
+        message: systemPromptPayload,
+        context: { ...context, latestScan: diagnosisData, __USER_PREF_LANG: selectedLang }
+      });
+
+      const replyText = chatRes.data.reply;
+      const botMessage = { role: 'assistant', text: replyText };
+      setMessages((prev) => [...prev, botMessage]);
+      speak(replyText);
+
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      const errorMessage = { role: 'assistant', text: "I'm sorry, I couldn't process the image right now. Please try a clearer image." };
+      setMessages((prev) => [...prev, errorMessage]);
+      speak(errorMessage.text);
+    } finally {
+      setIsProcessing(false);
+      if (fileInputRef.current) fileInputRef.current.value = ''; 
+    }
+  };
+
   return (
     <>
       {/* Floating Action Button */}
@@ -311,6 +360,9 @@ export default function AgriBot({ context }) {
                         ? 'bg-primary text-white rounded-tr-sm shadow-md' 
                         : 'bg-white text-slate-700 border border-slate-200 rounded-tl-sm shadow-sm'
                     }`} style={{ whiteSpace: 'pre-wrap' }}>
+                      {msg.image && (
+                         <img src={msg.image} alt="Upload" className="w-full h-auto max-w-[200px] rounded-lg mb-2 object-cover border border-slate-200/50 shadow-sm" />
+                      )}
                       {msg.text}
                     </div>
                   </div>
@@ -336,9 +388,24 @@ export default function AgriBot({ context }) {
             {/* Input Area */}
             <div className="p-4 bg-white border-t border-slate-100 shrink-0">
               <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 p-2 rounded-[1.5rem] focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all shadow-inner">
+                {/* Hidden File Input */}
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  ref={fileInputRef} 
+                  onChange={handleImageUpload} 
+                  className="hidden" 
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all bg-white border border-slate-200 text-slate-600 shadow-sm hover:text-primary hover:border-primary/30"
+                  title="Upload Crop Image"
+                >
+                   <Camera size={18} />
+                </button>
                 <button
                   onClick={toggleListen}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all ${
                     isListening 
                       ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]' 
                       : 'bg-white border border-slate-200 text-slate-600 shadow-sm hover:text-emerald-600 hover:border-emerald-200'
@@ -347,9 +414,9 @@ export default function AgriBot({ context }) {
                   {isListening ? (
                     <div className="relative flex items-center justify-center">
                        <span className="absolute inset-0 bg-red-400 rounded-full animate-ping opacity-40"></span>
-                       <MicOff size={20} />
+                       <MicOff size={18} />
                     </div>
-                  ) : <Mic size={20} />}
+                  ) : <Mic size={18} />}
                 </button>
                 <input
                   type="text"
