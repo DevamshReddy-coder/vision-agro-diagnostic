@@ -1,7 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Volume2, VolumeX, Send, Bot, User, X, Loader2 } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, Send, Bot, User, X, Loader2, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+
+const SUPPORTED_LANGUAGES = [
+  { code: 'en-US', name: 'English' },
+  { code: 'te-IN', name: 'Telugu (తెలుగు)' },
+  { code: 'hi-IN', name: 'Hindi (हिंदी)' },
+  { code: 'ta-IN', name: 'Tamil (தமிழ்)' },
+  { code: 'kn-IN', name: 'Kannada (ಕನ್ನಡ)' },
+  { code: 'ml-IN', name: 'Malayalam (മലയാളം)' },
+  { code: 'mr-IN', name: 'Marathi (मराठी)' },
+  { code: 'bn-IN', name: 'Bengali (বাংলা)' },
+];
 
 export default function AgriBot({ context }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,6 +23,7 @@ export default function AgriBot({ context }) {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(true); // TTS auto-play by default
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedLang, setSelectedLang] = useState('en-US');
 
   const recognitionRef = useRef(null);
   const synthRef = useRef(typeof window !== 'undefined' ? window.speechSynthesis : null);
@@ -23,14 +35,22 @@ export default function AgriBot({ context }) {
   }, [messages]);
 
   useEffect(() => {
+    // Proactively preload TTS voices to avoid delays when attempting to speak
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+      window.speechSynthesis.getVoices(); // try fetch immediately
+    }
+  }, []);
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
         recognitionRef.current.continuous = false;
         recognitionRef.current.interimResults = false;
-        // Optionally add language support here based on a toggle
-        // recognitionRef.current.lang = 'en-US'; 
 
         recognitionRef.current.onresult = (event) => {
           const transcript = event.results[0][0].transcript;
@@ -48,7 +68,7 @@ export default function AgriBot({ context }) {
         };
       }
     }
-  }, [context]); // depend on context to use latest data
+  }, [context]);
 
   const toggleListen = () => {
     if (isListening) {
@@ -58,8 +78,21 @@ export default function AgriBot({ context }) {
       if (synthRef.current?.speaking) {
         synthRef.current.cancel(); // Stop speaking when listening starts
       }
-      recognitionRef.current?.start();
-      setIsListening(true);
+      
+      if (recognitionRef.current) {
+        // Enforce the user's specifically selected language! 
+        // This is required for non-English Speech-to-Text to work on Google Chrome / Safari.
+        recognitionRef.current.lang = selectedLang;
+        try {
+          recognitionRef.current.start();
+          setIsListening(true);
+        } catch (e) {
+          console.error("Mic start error:", e);
+          setIsListening(false);
+        }
+      } else {
+        alert("Your browser does not support Voice Recognition. Please use Chrome, Edge, or Safari.");
+      }
     }
   };
 
@@ -69,10 +102,48 @@ export default function AgriBot({ context }) {
     // Stop any current speech
     synthRef.current.cancel();
     
-    const utterance = new SpeechSynthesisUtterance(text);
+    // Quick sanitization
+    const cleanText = text.replace(/\*/g, ''); 
+    const utterance = new SpeechSynthesisUtterance(cleanText);
     
-    // Attempt to match voice to Indian English / Multilingual based on text if needed
-    // Default handles it effectively on modern browsers
+    // 1. Automatically detect the response script to match the TTS Voice Engine language
+    const languageScripts = {
+      'te-IN': /[\u0C00-\u0C7F]/, // Telugu
+      'hi-IN': /[\u0900-\u097F]/, // Hindi / Marathi
+      'ta-IN': /[\u0B80-\u0BFF]/, // Tamil
+      'kn-IN': /[\u0C80-\u0CFF]/, // Kannada
+      'ml-IN': /[\u0D00-\u0D7F]/, // Malayalam
+      'bn-IN': /[\u0980-\u09FF]/, // Bengali
+    };
+    
+    let detectedLang = 'en-US';
+    for (const [lang, regex] of Object.entries(languageScripts)) {
+      if (regex.test(text)) {
+          detectedLang = lang;
+          // Synchronize dropdown UI if the AI responded in a different language gracefully
+          setSelectedLang(lang);
+          break;
+      }
+    }
+    
+    // Enforce metadata language
+    utterance.lang = detectedLang;
+    
+    // 2. Scan available device voices for exact language match
+    const voices = synthRef.current.getVoices();
+    const primaryLang = detectedLang.split('-')[0];
+    let selectedVoice = voices.find(v => v.lang.includes(detectedLang) || v.lang.includes(primaryLang));
+    
+    // If exact regional language voice is absent (Chrome desktop misses some), fallback to Hindi which shares similar phonetic structures
+    if (!selectedVoice && detectedLang !== 'en-US') {
+      selectedVoice = voices.find(v => v.lang.includes('hi')); 
+    }
+
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+    }
+
+    utterance.rate = 0.95; // Slightly slower for clarity
     synthRef.current.speak(utterance);
   };
 
@@ -89,7 +160,8 @@ export default function AgriBot({ context }) {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
       const res = await axios.post(`${baseUrl}/inference/chat`, {
         message: textToSend,
-        context: context // Send current diagnostic report to be context-aware
+        // Optional directive forcing the AI to maintain the selected language output
+        context: { ...context, __USER_PREF_LANG: selectedLang }
       });
 
       const replyText = res.data.reply;
@@ -117,7 +189,7 @@ export default function AgriBot({ context }) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-8 right-8 w-16 h-16 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-colors group z-50 border-4 border-white"
+            className="fixed bottom-8 right-8 w-16 h-16 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-colors group z-[9999] border-4 border-white"
           >
             <div className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-20"></div>
             <Bot size={32} className="group-hover:scale-110 transition-transform" />
@@ -132,36 +204,54 @@ export default function AgriBot({ context }) {
             initial={{ opacity: 0, y: 50, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.95 }}
-            className="fixed bottom-8 right-8 w-[400px] h-[600px] bg-white rounded-[2rem] shadow-[-10px_-10px_30px_#ffffff,10px_10px_30px_rgba(0,0,0,0.1)] border border-slate-100 flex flex-col overflow-hidden z-50"
+            className="fixed bottom-8 right-8 w-[400px] h-[650px] bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 flex flex-col overflow-hidden z-[9999]"
           >
-            {/* Header */}
-            <div className="bg-slate-900 p-6 flex items-center justify-between text-white shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg relative">
-                   <div className="absolute inset-0 bg-emerald-400 rounded-full animate-ping opacity-40"></div>
-                   <Bot size={24} />
+            {/* Header Module with Integrated Language Selector */}
+            <div className="bg-slate-900 p-6 flex flex-col gap-4 text-white shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg relative">
+                     <div className="absolute inset-0 bg-emerald-400 rounded-full animate-ping opacity-40"></div>
+                     <Bot size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-black tracking-widest uppercase text-sm">Farm Voice</h3>
+                    <p className="text-[10px] text-emerald-400 font-bold tracking-widest flex items-center gap-1 uppercase">
+                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse block"></span>
+                      Voice Matrix Online
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-black tracking-widest uppercase text-sm">Farm Voice</h3>
-                  <p className="text-[10px] text-emerald-400 font-bold tracking-widest flex items-center gap-1 uppercase">
-                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse block"></span>
-                    Multilingual Assistant
-                  </p>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setIsSpeaking(!isSpeaking)}
+                    className={`p-2 rounded-full transition-colors ${isSpeaking ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}
+                  >
+                    {isSpeaking ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                  </button>
+                  <button 
+                    onClick={() => setIsOpen(false)}
+                    className="p-2 hover:bg-slate-800 rounded-full transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setIsSpeaking(!isSpeaking)}
-                  className={`p-2 rounded-full transition-colors ${isSpeaking ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}
-                >
-                  {isSpeaking ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                </button>
-                <button 
-                  onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-slate-800 rounded-full transition-colors"
-                >
-                  <X size={20} />
-                </button>
+
+              {/* Explicit Language Routing Bar */}
+              <div className="flex items-center gap-3 bg-slate-800/80 border border-slate-700 p-2 rounded-xl">
+                 <Globe size={16} className="text-emerald-400 ml-1" />
+                 <select 
+                   value={selectedLang} 
+                   onChange={(e) => setSelectedLang(e.target.value)}
+                   className="flex-1 bg-transparent text-xs font-bold uppercase tracking-widest text-slate-300 outline-none appearance-none cursor-pointer"
+                 >
+                    {SUPPORTED_LANGUAGES.map(lang => (
+                       <option key={lang.code} value={lang.code} className="text-slate-900 bg-white">
+                         {lang.name}
+                       </option>
+                    ))}
+                 </select>
               </div>
             </div>
 
@@ -173,11 +263,11 @@ export default function AgriBot({ context }) {
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-slate-900 text-white'}`}>
                       {msg.role === 'user' ? <User size={14} /> : <Bot size={14} />}
                     </div>
-                    <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
+                    <div className={`p-4 rounded-2xl text-[13px] leading-relaxed font-medium ${
                       msg.role === 'user' 
                         ? 'bg-primary text-white rounded-tr-sm shadow-md' 
                         : 'bg-white text-slate-700 border border-slate-200 rounded-tl-sm shadow-sm'
-                    }`}>
+                    }`} style={{ whiteSpace: 'pre-wrap' }}>
                       {msg.text}
                     </div>
                   </div>
@@ -202,13 +292,13 @@ export default function AgriBot({ context }) {
 
             {/* Input Area */}
             <div className="p-4 bg-white border-t border-slate-100 shrink-0">
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 p-2 rounded-[1.5rem]">
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 p-2 rounded-[1.5rem] focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all shadow-inner">
                 <button
                   onClick={toggleListen}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all shadow-sm ${
+                  className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all ${
                     isListening 
-                      ? 'bg-red-500 text-white shadow-red-500/30' 
-                      : 'bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 hover:border-emerald-200'
+                      ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]' 
+                      : 'bg-white border border-slate-200 text-slate-600 shadow-sm hover:text-emerald-600 hover:border-emerald-200'
                   }`}
                 >
                   {isListening ? (
@@ -223,14 +313,14 @@ export default function AgriBot({ context }) {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder={isListening ? 'Listening...' : "Ask about your crop..."}
-                  className="flex-1 bg-transparent px-4 py-2 outline-none text-sm placeholder:text-slate-400 font-medium"
+                  placeholder={isListening ? 'Listening (in selected language)...' : "Ask about your crop..."}
+                  className="flex-1 bg-transparent px-2 py-2 outline-none text-[13px] placeholder:text-slate-400 font-medium"
                   disabled={isListening}
                 />
                 <button
                   onClick={() => handleSend()}
                   disabled={!input.trim() || isProcessing}
-                  className="w-12 h-12 bg-slate-900 text-white rounded-full flex items-center justify-center shrink-0 disabled:opacity-50 hover:bg-emerald-600 transition-colors"
+                  className="w-12 h-12 bg-slate-900 text-white rounded-full flex items-center justify-center shrink-0 disabled:opacity-50 hover:bg-emerald-600 transition-colors shadow-sm"
                 >
                   {isProcessing ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} className="-ml-0.5 mt-0.5" />}
                 </button>
