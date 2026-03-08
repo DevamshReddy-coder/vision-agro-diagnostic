@@ -137,37 +137,56 @@ export default function AgriBot({ context }) {
     synthRef.current.cancel();
     
     const cleanText = text.replace(/[*#]/g, ''); 
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    
-    // Rigorously enforce the dropdown selected language to avoid TTS silence mismatch
-    utterance.lang = selectedLang;
-    
-    const voices = synthRef.current.getVoices();
-    
-    // 1. Prioritize Google Network Voices for highest quality regional language
-    let bestVoice = voices.find(v => v.lang === selectedLang && v.name.includes('Google'));
-    
-    // 2. Fallback to exact match OS Voice
-    if (!bestVoice) {
-      bestVoice = voices.find(v => v.lang === selectedLang);
-    }
-    
-    // 3. Fallback to generic prefix match (e.g. 'te' matching 'te-IN')
-    if (!bestVoice) {
-       const prefix = selectedLang.split('-')[0];
-       bestVoice = voices.find(v => v.lang.startsWith(prefix));
-    }
-    
-    if (bestVoice) {
-      utterance.voice = bestVoice;
-    }
 
-    utterance.rate = 0.9; 
-    
-    // Add micro-delay to ensure Chrome TTS queue executes
-    setTimeout(() => {
-        synthRef.current.speak(utterance);
-    }, 100);
+    const playVoice = () => {
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      const voices = synthRef.current.getVoices();
+      
+      const targetLang = selectedLang.toLowerCase().replace('_', '-');
+      const targetPrefix = targetLang.split('-')[0];
+
+      // 1. Rigorous search for Google Network Voices for highest quality regional language
+      let bestVoice = voices.find(v => 
+        (v.lang.toLowerCase().replace('_', '-') === targetLang || 
+         v.lang.toLowerCase().startsWith(targetPrefix)) && 
+        v.name.includes('Google')
+      );
+      
+      // 2. Fallback to any exact match OS Voice (e.g. te-IN)
+      if (!bestVoice) {
+        bestVoice = voices.find(v => v.lang.toLowerCase().replace('_', '-') === targetLang);
+      }
+      
+      // 3. Fallback to generic prefix match (e.g. 'te' matching 'te-IN')
+      if (!bestVoice) {
+         bestVoice = voices.find(v => v.lang.toLowerCase().startsWith(targetPrefix));
+      }
+      
+      if (bestVoice) {
+        utterance.voice = bestVoice;
+        utterance.lang = bestVoice.lang;
+      } else {
+        utterance.lang = selectedLang;
+      }
+
+      utterance.rate = 0.9; 
+      synthRef.current.speak(utterance);
+    };
+
+    // Chrome bug workaround: voices can be empty initially. Wait for them to load if so.
+    if (synthRef.current.getVoices().length === 0) {
+      const oldOnVoicesChanged = synthRef.current.onvoiceschanged;
+      synthRef.current.onvoiceschanged = () => {
+        if (oldOnVoicesChanged) oldOnVoicesChanged();
+        playVoice();
+        // Clear it so it doesn't double trigger later
+        synthRef.current.onvoiceschanged = oldOnVoicesChanged;
+      };
+      // Trigger a load
+      synthRef.current.getVoices();
+    } else {
+      setTimeout(playVoice, 50);
+    }
   };
 
   const handleSend = async (textOverride = null) => {
