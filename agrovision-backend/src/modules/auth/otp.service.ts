@@ -1,30 +1,13 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
-import Redis from 'ioredis';
 
 @Injectable()
 export class OtpService {
     private readonly logger = new Logger(OtpService.name);
-    private redis: Redis;
-    private twilioClient: any;
+    private otpCache = new Map<string, { otp: string, expiresAt: number }>();
+    private rateLimitCache = new Map<string, number>();
 
     constructor() {
-        // Initialize Redis for OTP storage with TTL
-        const redisUrl = process.env.REDIS_URL;
-        if (redisUrl) {
-            const url = new URL(redisUrl);
-            this.redis = new Redis({
-                host: url.hostname,
-                port: parseInt(url.port || '6379'),
-                password: url.password,
-                tls: redisUrl.startsWith('rediss://') ? { rejectUnauthorized: false } : undefined,
-            });
-        } else {
-            this.redis = new Redis({
-                host: process.env.REDIS_HOST || 'localhost',
-                port: parseInt(process.env.REDIS_PORT || '6379'),
-            });
-        }
         if (process.env.FAST2SMS_API_KEY) {
             this.logger.log('✅ Fast2SMS API Key initialized');
         } else {
@@ -45,18 +28,18 @@ export class OtpService {
 
         // Rate limit: 1 OTP per mobile per 60 seconds
         const rateLimitKey = `otp:rateLimit:${e164Phone}`;
-        const rateLimited = await this.redis.get(rateLimitKey);
-        if (rateLimited) {
+        const rateLimitExp = this.rateLimitCache.get(rateLimitKey);
+        if (rateLimitExp && rateLimitExp > Date.now()) {
             throw new BadRequestException('Please wait 60 seconds before requesting another OTP.');
         }
 
         // Generate secure 6-digit OTP
         const otp = crypto.randomInt(100000, 999999).toString();
 
-        // Store OTP in Redis with 5 minute expiry
+        // Store OTP in Map with 5 minute expiry
         const otpKey = `otp:verify:${e164Phone}`;
-        await this.redis.set(otpKey, otp, 'EX', 300); // 5 minutes TTL
-        await this.redis.set(rateLimitKey, '1', 'EX', 60); // 60 second rate limit
+        this.otpCache.set(otpKey, { otp, expiresAt: Date.now() + 300000 }); // 5 minutes TTL
+        this.rateLimitCache.set(rateLimitKey, Date.now() + 60000); // 60 second rate limit
 
         if (process.env.FAST2SMS_API_KEY) {
             try {
@@ -90,17 +73,18 @@ export class OtpService {
         const e164Phone = normalizedPhone.startsWith('+') ? normalizedPhone : `+91${normalizedPhone}`;
 
         const otpKey = `otp:verify:${e164Phone}`;
-        const storedOtp = await this.redis.get(otpKey);
+        const stored = this.otpCache.get(otpKey);
 
-        if (!storedOtp) {
+        if (!stored || stored.expiresAt < Date.now()) {
+            this.otpCache.delete(otpKey);
             throw new BadRequestException('OTP expired. Please request a new one.');
         }
-        if (storedOtp !== otp) {
+        if (stored.otp !== otp) {
             throw new BadRequestException('Incorrect OTP. Please try again.');
         }
 
         // Delete OTP after successful verification (one-time use)
-        await this.redis.del(otpKey);
+        this.otpCache.delete(otpKey);
         return true;
     }
 }
