@@ -21,146 +21,189 @@ export default function AgriBot({ context }) {
   ]);
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(true); // TTS auto-play by default
+  const [isSpeaking, setIsSpeaking] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedLang, setSelectedLang] = useState('en-US');
+  const [selectedLang, setSelectedLang] = useState('te-IN');
 
   const recognitionRef = useRef(null);
   const synthRef = useRef(typeof window !== 'undefined' ? window.speechSynthesis : null);
   const messagesEndRef = useRef(null);
+  const finalTranscriptRef = useRef('');
 
   useEffect(() => {
-    // Scroll to bottom when messages update
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
-    // Proactively preload TTS voices to avoid delays when attempting to speak
+    // Proactively preload TTS voices
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.onvoiceschanged = () => {
         window.speechSynthesis.getVoices();
       };
-      window.speechSynthesis.getVoices(); // try fetch immediately
+      window.speechSynthesis.getVoices();
     }
   }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false;
-        recognitionRef.current.interimResults = false;
-
-        recognitionRef.current.onresult = (event) => {
-          const transcript = event.results[0][0].transcript;
-          setInput(transcript);
-          handleSend(transcript);
-        };
-
-        recognitionRef.current.onerror = (event) => {
-          console.error("Speech recognition error", event.error);
-          setIsListening(false);
-        };
-
-        recognitionRef.current.onend = () => {
-          setIsListening(false);
-        };
-      }
-    }
-  }, [context]);
 
   const toggleListen = () => {
     if (isListening) {
       recognitionRef.current?.stop();
       setIsListening(false);
-    } else {
-      if (synthRef.current?.speaking) {
-        synthRef.current.cancel(); // Stop speaking when listening starts
+      return;
+    }
+
+    if (synthRef.current?.speaking) {
+      synthRef.current.cancel(); 
+    }
+    
+    if (typeof window === 'undefined') return;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Your browser does not support Voice Recognition. Please use Chrome, Edge, or Safari.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false; // Capture one cohesive thought then stop
+    recognition.interimResults = true; // Show text on screen dynamically
+    recognition.lang = selectedLang;
+    
+    finalTranscriptRef.current = '';
+
+    recognition.onstart = () => {
+       setIsListening(true);
+       setInput(''); // Clear input for fresh listening
+    };
+
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      let localFinal = '';
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          localFinal += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+
+      if (localFinal) {
+          finalTranscriptRef.current += localFinal;
       }
       
-      if (recognitionRef.current) {
-        // Enforce the user's specifically selected language! 
-        // This is required for non-English Speech-to-Text to work on Google Chrome / Safari.
-        recognitionRef.current.lang = selectedLang;
-        try {
-          recognitionRef.current.start();
-          setIsListening(true);
-        } catch (e) {
-          console.error("Mic start error:", e);
-          setIsListening(false);
-        }
-      } else {
-        alert("Your browser does not support Voice Recognition. Please use Chrome, Edge, or Safari.");
+      const displayTxt = finalTranscriptRef.current + interimTranscript;
+      setInput(displayTxt);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+      setIsListening(false);
+      if (event.error === 'not-allowed') {
+        alert("Microphone access blocked. Please enable it in browser settings.");
       }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      const readyTranscript = finalTranscriptRef.current.trim();
+      
+      if (readyTranscript.length > 0) {
+          handleSend(readyTranscript);
+      } else {
+          // Fallback if the browser only registered interim results
+          setInput((currentInput) => {
+             if (currentInput.trim().length > 0) {
+                 handleSend(currentInput.trim());
+                 return '';
+             }
+             return currentInput;
+          });
+      }
+    };
+
+    try {
+      recognition.start();
+      recognitionRef.current = recognition;
+    } catch (e) {
+      console.error("Mic start error:", e);
+      setIsListening(false);
     }
   };
 
   const speak = (text) => {
     if (!isSpeaking || !synthRef.current) return;
     
-    // Stop any current speech
     synthRef.current.cancel();
     
-    // Quick sanitization
-    const cleanText = text.replace(/\*/g, ''); 
+    const cleanText = text.replace(/[*#]/g, ''); 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     
-    // 1. Automatically detect the response script to match the TTS Voice Engine language
     const languageScripts = {
-      'te-IN': /[\u0C00-\u0C7F]/, // Telugu
-      'hi-IN': /[\u0900-\u097F]/, // Hindi / Marathi
-      'ta-IN': /[\u0B80-\u0BFF]/, // Tamil
-      'kn-IN': /[\u0C80-\u0CFF]/, // Kannada
-      'ml-IN': /[\u0D00-\u0D7F]/, // Malayalam
-      'bn-IN': /[\u0980-\u09FF]/, // Bengali
+      'te-IN': /[\u0C00-\u0C7F]/,
+      'hi-IN': /[\u0900-\u097F]/,
+      'ta-IN': /[\u0B80-\u0BFF]/,
+      'kn-IN': /[\u0C80-\u0CFF]/,
+      'ml-IN': /[\u0D00-\u0D7F]/,
+      'bn-IN': /[\u0980-\u09FF]/,
     };
     
     let detectedLang = 'en-US';
     for (const [lang, regex] of Object.entries(languageScripts)) {
       if (regex.test(text)) {
           detectedLang = lang;
-          // Synchronize dropdown UI if the AI responded in a different language gracefully
-          setSelectedLang(lang);
+          setSelectedLang(lang); // Auto-sync UI language
           break;
       }
     }
     
-    // Enforce metadata language
     utterance.lang = detectedLang;
     
-    // 2. Scan available device voices for exact language match
+    // CRITICAL FIX: 
+    // We MUST NOT force a mismatching engine (like Hindi) onto Telugu characters which silences modern TTS.
+    // Use an exact matching voice packet if present. 
+    // Otherwise, leave utterance.voice = undefined to let the OS fallback natively over Google Cloud TTS.
     const voices = synthRef.current.getVoices();
     const primaryLang = detectedLang.split('-')[0];
-    let selectedVoice = voices.find(v => v.lang.includes(detectedLang) || v.lang.includes(primaryLang));
     
-    // If exact regional language voice is absent (Chrome desktop misses some), fallback to Hindi which shares similar phonetic structures
-    if (!selectedVoice && detectedLang !== 'en-US') {
-      selectedVoice = voices.find(v => v.lang.includes('hi')); 
-    }
-
+    // Find the exact voice match by sweeping metadata languages
+    let selectedVoice = voices.find(v => {
+       const vLang = v.lang.replace('_', '-').toLowerCase();
+       return vLang.includes(detectedLang.toLowerCase()) || vLang === primaryLang.toLowerCase();
+    });
+    
     if (selectedVoice) {
-      utterance.voice = selectedVoice;
+      // Prioritize Google Cloud voices from Chrome for higher quality Indian accents
+      const googleVoice = voices.find(v => v.lang.includes(detectedLang) && v.name.includes('Google'));
+      utterance.voice = googleVoice || selectedVoice;
     }
 
-    utterance.rate = 0.95; // Slightly slower for clarity
-    synthRef.current.speak(utterance);
+    utterance.rate = 0.9; 
+    
+    // Add micro-delay to ensure Chrome TTS queue executes
+    setTimeout(() => {
+        synthRef.current.speak(utterance);
+    }, 100);
   };
 
   const handleSend = async (textOverride = null) => {
-    const textToSend = textOverride || input;
+    // We support passing the transcription string directly via parameter, or picking from input box state.
+    const textToSend = typeof textOverride === 'string' ? textOverride : input;
     if (!textToSend.trim()) return;
 
     const userMessage = { role: 'user', text: textToSend };
     setMessages((prev) => [...prev, userMessage]);
+    
+    // Immediately clear state safely
     setInput('');
+    finalTranscriptRef.current = '';
+    
     setIsProcessing(true);
 
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
       const res = await axios.post(`${baseUrl}/inference/chat`, {
         message: textToSend,
-        // Optional directive forcing the AI to maintain the selected language output
+        // Optional directive forcing AI to output matching the user's select element
         context: { ...context, __USER_PREF_LANG: selectedLang }
       });
 
@@ -312,7 +355,10 @@ export default function AgriBot({ context }) {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                  onKeyDown={(e) => {
+                     // Check if enter is pressed and we aren't using an IME processor (like typing directly in regional keyboards)
+                     if (e.key === 'Enter' && !isProcessing) handleSend();
+                  }}
                   placeholder={isListening ? 'Listening (in selected language)...' : "Ask about your crop..."}
                   className="flex-1 bg-transparent px-2 py-2 outline-none text-[13px] placeholder:text-slate-400 font-medium"
                   disabled={isListening}
