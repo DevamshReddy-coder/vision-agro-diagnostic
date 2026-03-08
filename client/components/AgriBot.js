@@ -47,8 +47,8 @@ export default function AgriBot({ context }) {
 
   const toggleListen = () => {
     if (isListening) {
-      recognitionRef.current?.stop();
       setIsListening(false);
+      recognitionRef.current?.stop();
       return;
     }
 
@@ -65,7 +65,7 @@ export default function AgriBot({ context }) {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = false; // Capture one cohesive thought then stop
+    recognition.continuous = true; // Allow user to continuously speak until they pause/stop naturally
     recognition.interimResults = true; // Show text on screen dynamically
     recognition.lang = selectedLang;
     
@@ -139,43 +139,27 @@ export default function AgriBot({ context }) {
     const cleanText = text.replace(/[*#]/g, ''); 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     
-    const languageScripts = {
-      'te-IN': /[\u0C00-\u0C7F]/,
-      'hi-IN': /[\u0900-\u097F]/,
-      'ta-IN': /[\u0B80-\u0BFF]/,
-      'kn-IN': /[\u0C80-\u0CFF]/,
-      'ml-IN': /[\u0D00-\u0D7F]/,
-      'bn-IN': /[\u0980-\u09FF]/,
-    };
+    // Rigorously enforce the dropdown selected language to avoid TTS silence mismatch
+    utterance.lang = selectedLang;
     
-    let detectedLang = 'en-US';
-    for (const [lang, regex] of Object.entries(languageScripts)) {
-      if (regex.test(text)) {
-          detectedLang = lang;
-          setSelectedLang(lang); // Auto-sync UI language
-          break;
-      }
+    const voices = synthRef.current.getVoices();
+    
+    // 1. Prioritize Google Network Voices for highest quality regional language
+    let bestVoice = voices.find(v => v.lang === selectedLang && v.name.includes('Google'));
+    
+    // 2. Fallback to exact match OS Voice
+    if (!bestVoice) {
+      bestVoice = voices.find(v => v.lang === selectedLang);
     }
     
-    utterance.lang = detectedLang;
+    // 3. Fallback to generic prefix match (e.g. 'te' matching 'te-IN')
+    if (!bestVoice) {
+       const prefix = selectedLang.split('-')[0];
+       bestVoice = voices.find(v => v.lang.startsWith(prefix));
+    }
     
-    // CRITICAL FIX: 
-    // We MUST NOT force a mismatching engine (like Hindi) onto Telugu characters which silences modern TTS.
-    // Use an exact matching voice packet if present. 
-    // Otherwise, leave utterance.voice = undefined to let the OS fallback natively over Google Cloud TTS.
-    const voices = synthRef.current.getVoices();
-    const primaryLang = detectedLang.split('-')[0];
-    
-    // Find the exact voice match by sweeping metadata languages
-    let selectedVoice = voices.find(v => {
-       const vLang = v.lang.replace('_', '-').toLowerCase();
-       return vLang.includes(detectedLang.toLowerCase()) || vLang === primaryLang.toLowerCase();
-    });
-    
-    if (selectedVoice) {
-      // Prioritize Google Cloud voices from Chrome for higher quality Indian accents
-      const googleVoice = voices.find(v => v.lang.includes(detectedLang) && v.name.includes('Google'));
-      utterance.voice = googleVoice || selectedVoice;
+    if (bestVoice) {
+      utterance.voice = bestVoice;
     }
 
     utterance.rate = 0.9; 
