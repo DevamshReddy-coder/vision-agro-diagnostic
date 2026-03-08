@@ -8,6 +8,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import AgriBot from './AgriBot';
 
 export default function DiagnosisWorkspace() {
   const [image, setImage] = useState(null);
@@ -566,6 +567,7 @@ export default function DiagnosisWorkspace() {
 
         </div>
       </div>
+      <AgriBot context={result} />
     </section>
   );
 }

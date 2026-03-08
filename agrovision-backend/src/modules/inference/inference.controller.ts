@@ -84,4 +84,15 @@ export class InferenceController {
             fullResult: report.status === 'COMPLETED' ? report.fullResult : null,
         };
     }
+
+    @Public()
+    @Post('chat')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Multilingual voice-enabled agriculture assistant' })
+    async chat(@Body() body: { message: string, context?: any }) {
+        if (!body.message) {
+            throw new BadRequestException('Message is required');
+        }
+        return this.inferenceService.chatWithAssistant(body.message, body.context);
+    }
 }

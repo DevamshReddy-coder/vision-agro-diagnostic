@@ -52,4 +52,8 @@ export class InferenceService {
         }
         return record;
     }
+
+    async chatWithAssistant(message: string, context?: any) {
+        return this.inferenceProcessor.chat(message, context);
+    }
 }
