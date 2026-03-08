@@ -10,10 +10,6 @@ import { GatewayModule } from '../../gateway/gateway.module';
 @Module({
     imports: [
         TypeOrmModule.forFeature([DiagnosticReport]),
-        BullModule.registerQueue({
-            name: 'inference_queue',
-            // The connection to Redis is configured globally in app.module.ts
-        }),
         GatewayModule, // To allow processor to broadcast via telemetry.gateway.ts
     ],
     controllers: [InferenceController],

@@ -1,14 +1,13 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiagnosticReport, DiagnosticStatus } from './entities/diagnostic-report.entity';
+import { InferenceProcessor } from './inference.processor';
 
 @Injectable()
 export class InferenceService {
     constructor(
-        @InjectQueue('inference_queue') private readonly inferenceQueue: Queue,
+        private readonly inferenceProcessor: InferenceProcessor,
         @InjectRepository(DiagnosticReport) private readonly reportRepo: Repository<DiagnosticReport>,
     ) { }
 
@@ -23,9 +22,11 @@ export class InferenceService {
 
             const savedReport = await this.reportRepo.save(newReport);
 
-            // 2. Offload to async job processor using Kafka/Redis BullMQ
-            console.log(`[Queue] Adding Job to Redis/Kafka: ${savedReport.id}`);
-            await this.inferenceQueue.add('analyze_image', {
+            // 2. Offload to async job processor bypassing BullMQ to avoid Redis dependency
+            console.log(`[Queue] Executing async inference job inline: ${savedReport.id}`);
+
+            // Execute in background without awaiting to free up the HTTP request
+            this.inferenceProcessor.process({
                 reportId: savedReport.id,
                 imageUrl: tempImageUrl,
                 base64Image,
@@ -33,10 +34,7 @@ export class InferenceService {
                 lat,
                 lon,
                 cropType
-            }, {
-                removeOnComplete: true, // Auto flush standard jobs after completion
-                attempts: 2,           // Retry if the neural network times out
-            });
+            }).catch(e => console.error("Background processing failed:", e));
 
             return savedReport; // Return early, don't block the HTTP request!
         } catch (err) {

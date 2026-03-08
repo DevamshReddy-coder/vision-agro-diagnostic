@@ -1,5 +1,3 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Job } from 'bullmq';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,20 +6,17 @@ import { TelemetryGateway } from '../../gateway/telemetry.gateway';
 import { GoogleGenAI } from '@google/genai';
 import axios from 'axios';
 
-@Processor('inference_queue')
 @Injectable()
-export class InferenceProcessor extends WorkerHost {
+export class InferenceProcessor {
     constructor(
         @InjectRepository(DiagnosticReport)
         private readonly reportRepo: Repository<DiagnosticReport>,
         private readonly gateway: TelemetryGateway,
-    ) {
-        super();
-    }
+    ) { }
 
-    async process(job: Job<any, any, string>): Promise<any> {
-        const reportId = job.data.reportId;
-        console.log(`[AI Worker] Starting inference for Job ID: ${job.id}, Report ID: ${reportId}`);
+    async process(data: { reportId: string, imageUrl?: string, base64Image?: string, mimeType?: string, lat?: string, lon?: string, cropType?: string }): Promise<any> {
+        const reportId = data.reportId;
+        console.log(`[AI Worker] Starting immediate inference for Report ID: ${reportId}`);
 
         // Update DB to Processing
         await this.reportRepo.update(reportId, { status: DiagnosticStatus.PROCESSING });
@@ -29,7 +24,7 @@ export class InferenceProcessor extends WorkerHost {
         // Emit real-time status update to frontend
         this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 10 });
 
-        const { base64Image, mimeType, lat, lon, cropType } = job.data;
+        const { base64Image, mimeType, lat, lon, cropType } = data;
         let finalOutput: any = null;
         const apiKey = process.env.GEMINI_API_KEY || '';
 
