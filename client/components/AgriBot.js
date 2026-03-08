@@ -16,8 +16,19 @@ const SUPPORTED_LANGUAGES = [
 
 export default function AgriBot({ context }) {
   const [isOpen, setIsOpen] = useState(false);
+  const INTRO_MAP = {
+      'te-IN': 'నమస్కారం! నేను మీ ఆగ్రోవిజన్ AI సహాయకుడిని. మీ పంటలు, వ్యాధులు किंवा రోగనిర్ధారణ నివేదిక గురించి ఏదైనా అడగండి.',
+      'hi-IN': 'नमस्ते! मैं आपका AgroVision AI सहायक हूँ। मुझे अपनी फसलों, बीमारियों या नैदानिक रिपोर्ट के बारे में कुछ भी पूछें।',
+      'ta-IN': 'வணக்கம்! நான் உங்கள் அக்ரோவிஷன் ஏஐ உதவியாளர். உங்கள் பயிர்கள், நோய்கள் அல்லது நோயறிதல் அறிக்கை பற்றி எதையும் கேளுங்கள்.',
+      'kn-IN': 'ನಮಸ್ತೆ! ನಾನು ನಿಮ್ಮ ಅಗ್ರೋವಿಷನ್ AI ಸಹಾಯಕ. ನಿಮ್ಮ ಬೆಳೆಗಳು, ರೋಗಗಳು ಅಥವಾ ರೋಗನಿರ್ಣಯದ ವರದಿಯ ಬಗ್ಗೆ ಏನು ಬೇಕಾದರೂ ಕೇಳಿ.',
+      'ml-IN': 'നമസ്കാരം! ഞാൻ നിങ്ങളുടെ അഗ്രോവിഷൻ AI സഹായിയാണ്. നിങ്ങളുടെ വിളകൾ, രോഗങ്ങൾ അല്ലെങ്കിൽ രോഗനിർണയ റിപ്പോർട്ടിനെക്കുറിച്ച് എന്തും ചോദിക്കുക.',
+      'mr-IN': 'नमस्कार! मी तुमचा ॲग्रोव्हिजन एआय सहाय्यक आहे. मला तुमचे पीक, रोग किंवा निदान अहवालाविषयी काहीही विचारा.',
+      'bn-IN': 'নমস্কার! আমি আপনার এগ্রোভিশন এআই সহকারী। আপনার ফসল, রোগ বা রোগ নির্ণয়ের প্রতিবেদন সম্পর্কে আমাকে যেকোনো কিছু জিজ্ঞাসা করুন।',
+      'en-US': 'Namaste! I am your AgroVision AI assistant. Ask me anything about your crops, diseases, or the diagnostic report.'
+  };
+
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: 'Namaste! I am your AgroVision AI assistant. Ask me anything about your crops, diseases, or the diagnostic report.' }
+    { role: 'assistant', text: INTRO_MAP['te-IN'] }
   ]);
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -34,6 +45,14 @@ export default function AgriBot({ context }) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+     // Push an implicit intro message when language alters actively keeping context alive
+     const newIntro = INTRO_MAP[selectedLang] || INTRO_MAP['en-US'];
+     setMessages((prev) => [...prev, { role: 'assistant', text: newIntro }]);
+     // Optionally auto read the intro out loud when language changes
+     speak(newIntro);
+  }, [selectedLang]);
 
   useEffect(() => {
     // Proactively preload TTS voices
@@ -218,7 +237,21 @@ export default function AgriBot({ context }) {
 
     } catch (error) {
       console.error("Chat API error:", error);
-      const errorMessage = { role: 'assistant', text: "I'm sorry, I'm having trouble connecting to the neural lab. Please try again." };
+      
+      const errorMap = {
+          'te-IN': 'క్షమించండి, వ్యవస్థతో కనెక్ట్ కావడంలో సమస్య ఉంది. దయచేసి మళ్లీ ప్రయత్నించండి.',
+          'hi-IN': 'क्षमा करें, सिस्टम से कनेक्ट होने में समस्या है। कृपया पुनः प्रयास करें।',
+          'ta-IN': 'மன்னிக்கவும், கணினியுடன் இணைப்பதில் சிக்கல் உள்ளது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.',
+          'kn-IN': 'ಕ್ಷಮಿಸಿ, ಸಿಸ್ಟಮ್‌ಗೆ ಸಂಪರ್ಕಿಸಲು ತೊಂದರೆಯಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+          'ml-IN': 'ക്ഷമിക്കണം, സിസ്റ്റത്തിലേക്ക് കണക്റ്റുചെയ്യുന്നതിൽ പ്രശ്‌നമുണ്ട്. ദയവായി വീണ്ടും ശ്രമിക്കുക.',
+          'mr-IN': 'क्षमस्व, सिस्टमशी कनेक्ट करण्यात समस्या आहे. कृपया पुन्हा प्रयत्न करा.',
+          'bn-IN': 'দুঃখিত, সিস্টেমের সাথে সংযোগ করতে সমস্যা হচ্ছে। অনুগ্রহ করে আবার চেষ্টা করুন।',
+          'en-US': "I'm sorry, I'm having trouble connecting to the neural lab. Please try again."
+      };
+      
+      const errorText = errorMap[selectedLang] || errorMap['en-US'];
+      const errorMessage = { role: 'assistant', text: errorText };
+      
       setMessages((prev) => [...prev, errorMessage]);
       speak(errorMessage.text);
     } finally {
@@ -266,7 +299,21 @@ export default function AgriBot({ context }) {
 
     } catch (error) {
       console.error("Image upload failed:", error);
-      const errorMessage = { role: 'assistant', text: "I'm sorry, I couldn't process the image right now. Please try a clearer image." };
+      
+      const errorMap = {
+          'te-IN': 'క్షమించండి, నేను ప్రస్తుతం చిత్రాన్ని విశ్లేషించలేకపోతున్నాను. దయచేసి మరింత స్పష్టమైన చిత్రాన్ని అప్‌లోడ్ చేయండి.',
+          'hi-IN': 'क्षमा करें, मैं अभी छवि को प्रोसेस नहीं कर सकता। कृपया एक स्पष्ट छवि आज़माएं।',
+          'ta-IN': 'மன்னிக்கவும், என்னால் இப்போது படத்தைச் செயல்படுத்த முடியவில்லை. தெளிவான படத்தை முயற்சிக்கவும்.',
+          'kn-IN': 'ಕ್ಷಮಿಸಿ, ನನಗೆ ಇದೀಗ ಚಿತ್ರವನ್ನು ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಸ್ಪಷ್ಟವಾದ ಚಿತ್ರವನ್ನು ಪ್ರಯತ್ನಿಸಿ.',
+          'ml-IN': 'ക്ഷമിക്കണം, എനിക്കിപ്പോൾ ചിത്രം പ്രോസസ്സ് ചെയ്യാൻ കഴിയില്ല. കൂടുതൽ വ്യക്തമായൊരു ചിത്രം ഉപയോഗിച്ച് ശ്രമിക്കുക.',
+          'mr-IN': 'क्षमस्व, मी आत्ता प्रतिमेवर प्रक्रिया करू शकत नाही. कृपया स्पष्ट चित्र वापरून पहा.',
+          'bn-IN': 'দুঃখিত, আমি বর্তমানে ছবিটি প্রক্রিয়া করতে পারছি না। অনুগ্রহ করে একটি পরিষ্কার ছবি চেষ্টা করুন।',
+          'en-US': "I'm sorry, I couldn't process the image right now. Please try a clearer image."
+      };
+      
+      const errorText = errorMap[selectedLang] || errorMap['en-US'];
+      const errorMessage = { role: 'assistant', text: errorText };
+      
       setMessages((prev) => [...prev, errorMessage]);
       speak(errorMessage.text);
     } finally {
