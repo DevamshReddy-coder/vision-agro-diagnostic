@@ -12,7 +12,7 @@ export class InferenceService {
         @InjectRepository(DiagnosticReport) private readonly reportRepo: Repository<DiagnosticReport>,
     ) { }
 
-    async submitAnalysisJob(userId: string, tempImageUrl: string, base64Image?: string, mimeType?: string, lat?: string, lon?: string): Promise<DiagnosticReport> {
+    async submitAnalysisJob(userId: string, tempImageUrl: string, base64Image?: string, mimeType?: string, lat?: string, lon?: string, cropType?: string): Promise<DiagnosticReport> {
         try {
             // 1. Create Placeholder DB Record (Status: QUEUED)
             const newReport = this.reportRepo.create({
@@ -31,7 +31,8 @@ export class InferenceService {
                 base64Image,
                 mimeType,
                 lat,
-                lon
+                lon,
+                cropType
             }, {
                 removeOnComplete: true, // Auto flush standard jobs after completion
                 attempts: 2,           // Retry if the neural network times out

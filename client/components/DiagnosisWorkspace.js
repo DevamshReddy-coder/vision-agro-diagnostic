@@ -49,6 +49,21 @@ export default function DiagnosisWorkspace() {
           setLoading(false);
           setInferenceProgress(null);
           // fetchHistory();
+       } else if (data.status === 'FAILED') {
+          if (window.fallbackTimeout) clearTimeout(window.fallbackTimeout);
+          setResult({
+            disease: "Analysis Failed: " + (data.error || "Unknown Error"),
+            crop: "Unknown",
+            confidence: "0.0",
+            severity: "Unknown",
+            riskLevel: "Unknown",
+            affectedAreaPercent: 0,
+            recommendations: { pesticides: [], organic: [], prevention: [] },
+            insights: { spreadProbability: "Unknown", yieldImpact: "Unknown", environmentalFactor: "Inference Engine Failure" },
+            message: "The neural network encountered an error during inference. Please review logs or try again."
+          });
+          setLoading(false);
+          setInferenceProgress(null);
        }
     });
 
