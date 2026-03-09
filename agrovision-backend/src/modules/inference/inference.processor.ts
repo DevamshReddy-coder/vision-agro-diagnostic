@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiagnosticReport, DiagnosticStatus } from './entities/diagnostic-report.entity';
@@ -197,9 +197,10 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
     }
 
     async chat(message: string, context?: any, history: any[] = []): Promise<any> {
-        const apiKey = process.env.GEMINI_API_KEY || '';
+        const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
-            throw new Error("AI Engine offline. Missing GEMINI_API_KEY.");
+            console.error("[Assistant Worker] CRITICAL: GEMINI_API_KEY is missing from environment variables.");
+            throw new InternalServerErrorException("AI Engine offline: Missing GEMINI_API_KEY on server.");
         }
 
         const ai = new GoogleGenAI({ apiKey });
@@ -252,7 +253,7 @@ ${context ? `[CURRENT DIAGNOSTIC/ENVIRONMENT CONTEXT]: ${JSON.stringify(context)
             };
         } catch (err: any) {
             console.error("[Assistant Worker] Gemini Chat Failed:", err);
-            throw new Error("Chat assistant error: " + err.message);
+            throw new InternalServerErrorException("Chat assistant error: " + (err.message || "Unknown AI failure"));
         }
     }
 }

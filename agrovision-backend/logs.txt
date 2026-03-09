@@ -56,3 +56,4 @@
 [11:28:26.015] [32mINFO[39m (4872): [36mMapped {/api/v1/library, POST} route[39m [90m{"context":"RouterExplorer"}[39m
 [11:28:26.015] [32mINFO[39m (4872): [36mMapped {/api/v1/library/:id, PUT} route[39m [90m{"context":"RouterExplorer"}[39m
 [11:28:26.015] [32mINFO[39m (4872): [36mNest application successfully started[39m [90m{"context":"NestApplication"}[39m
+[11:49:23.673] [32mINFO[39m (4872): [36mrequest completed[39m [90m{"req":{"method":"POST","url":"/api/v1/inference/chat","id":1},"res":{"statusCode":200},"responseTime":1806}[39m
