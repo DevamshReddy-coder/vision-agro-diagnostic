@@ -35,7 +35,7 @@ export class TelemetryData {
     @Column('float', { nullable: true })
     longitude: number;
 
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    @Column({ default: () => 'CURRENT_TIMESTAMP' })
     timestamp: Date; // Important since devices might batch upload historical metrics when offline
 
     @CreateDateColumn({ name: 'created_at' })

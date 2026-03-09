@@ -20,10 +20,10 @@ export class DiseaseLibraryEntity {
     @Column('simple-array', { nullable: true })
     affectedCrops: string[]; // ['Wheat', 'Barley']
 
-    @Column('text', { array: true, default: [] })
+    @Column('simple-array', { default: '' })
     treatmentProtocols: string[]; // Text array defining immediate action to contain
 
-    @Column('text', { array: true, default: [] })
+    @Column('simple-array', { default: '' })
     preventionStrategies: string[];
 
     @Column({ name: 'image_url', nullable: true })

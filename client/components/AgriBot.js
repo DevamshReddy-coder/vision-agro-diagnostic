@@ -188,9 +188,19 @@ export default function AgriBot({ context }) {
         utterance.lang = selectedLang;
       }
 
-      utterance.rate = 0.9; 
+      utterance.rate = 1.0; 
+      utterance.pitch = 1.0; 
+      utterance.volume = 1.0;
+      
       synthRef.current.speak(utterance);
     };
+
+    // Prime the voice engine on user gesture to bypass browser restrictions after async awaits
+    if (synthRef.current && isSpeaking) {
+      const primer = new SpeechSynthesisUtterance("");
+      primer.volume = 0;
+      synthRef.current.speak(primer);
+    }
 
     // Chrome bug workaround: voices can be empty initially. Wait for them to load if so.
     if (synthRef.current.getVoices().length === 0) {
@@ -209,6 +219,13 @@ export default function AgriBot({ context }) {
   };
 
   const handleSend = async (textOverride = null) => {
+    // Prime the voice engine on user gesture
+    if (synthRef.current && isSpeaking) {
+      const primer = new SpeechSynthesisUtterance("");
+      primer.volume = 0;
+      synthRef.current.speak(primer);
+    }
+
     // We support passing the transcription string directly via parameter, or picking from input box state.
     const textToSend = typeof textOverride === 'string' ? textOverride : input;
     if (!textToSend.trim()) return;
@@ -260,6 +277,13 @@ export default function AgriBot({ context }) {
   };
 
   const handleImageUpload = async (e) => {
+    // Prime the voice engine on user gesture
+    if (synthRef.current && isSpeaking) {
+      const primer = new SpeechSynthesisUtterance("");
+      primer.volume = 0;
+      synthRef.current.speak(primer);
+    }
+
     const file = e.target.files[0];
     if (!file) return;
 

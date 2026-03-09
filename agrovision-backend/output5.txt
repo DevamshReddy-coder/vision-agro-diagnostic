@@ -1,0 +1,16 @@
+[dotenv@17.3.1] injecting env (22) from .env -- tip: ⚡️ secrets for agents: https://dotenvx.com/as2
+Error: listen EADDRINUSE: address already in use :::5000
+    at Server.setupListenHandle [as _listen2] (node:net:1897:16)
+    at listenInCluster (node:net:1945:12)
+    at Server.listen (node:net:2037:7)
+    at ExpressAdapter.listen (C:\Users\saide\OneDrive\Documents\Desktop\vision-agro-diagnostic\agrovision-backend\node_modules\@nestjs\platform-express\adapters\express-adapter.js:127:32)
+    at C:\Users\saide\OneDrive\Documents\Desktop\vision-agro-diagnostic\agrovision-backend\node_modules\@nestjs\core\nest-application.js:188:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (C:\Users\saide\OneDrive\Documents\Desktop\vision-agro-diagnostic\agrovision-backend\node_modules\@nestjs\core\nest-application.js:178:16)
+    at async bootstrap (C:\Users\saide\OneDrive\Documents\Desktop\vision-agro-diagnostic\agrovision-backend\src\main.ts:71:5) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 5000
+}

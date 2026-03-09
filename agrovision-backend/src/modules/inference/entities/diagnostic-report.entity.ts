@@ -30,12 +30,11 @@ export class DiagnosticReport {
     @Column({ name: 'confidence_score', type: 'float', nullable: true })
     confidenceScore: number;
 
-    @Column({ name: 'full_result', type: 'jsonb', nullable: true })
+    @Column({ name: 'full_result', type: 'simple-json', nullable: true })
     fullResult: any;
 
     @Column({
-        type: 'enum',
-        enum: DiagnosticStatus,
+        type: 'varchar',
         default: DiagnosticStatus.QUEUED,
     })
     status: DiagnosticStatus;
