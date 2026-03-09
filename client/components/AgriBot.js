@@ -239,19 +239,36 @@ export default function AgriBot({ context }) {
     
     setIsProcessing(true);
 
+    let retries = 0;
+    const maxRetries = 2;
+    
+    const attemptSend = async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+        const res = await axios.post(`${baseUrl}/inference/chat`, {
+          message: textToSend,
+          history: messages.map(m => ({ role: m.role, text: m.text })),
+          context: { ...context, __USER_PREF_LANG: selectedLang }
+        });
+
+        const replyText = res.data.reply;
+        const botMessage = { role: 'assistant', text: replyText };
+        setMessages((prev) => [...prev, botMessage]);
+        speak(replyText);
+        return true;
+      } catch (error) {
+        if (retries < maxRetries) {
+          retries++;
+          console.warn(`Reconnecting... Attempt ${retries}`);
+          await new Promise(r => setTimeout(r, 1500));
+          return attemptSend();
+        }
+        throw error;
+      }
+    };
+
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-      const res = await axios.post(`${baseUrl}/inference/chat`, {
-        message: textToSend,
-        history: messages.map(m => ({ role: m.role, text: m.text })), // Maintain conversation memory
-        context: { ...context, __USER_PREF_LANG: selectedLang }
-      });
-
-      const replyText = res.data.reply;
-      const botMessage = { role: 'assistant', text: replyText };
-      setMessages((prev) => [...prev, botMessage]);
-      speak(replyText);
-
+      await attemptSend();
     } catch (error) {
       console.error("Chat API error:", error);
       
@@ -296,31 +313,49 @@ export default function AgriBot({ context }) {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
-      // 1. Send image to pipeline
-      const formData = new FormData();
-      formData.append('image', file);
-      formData.append('cropType', 'Auto-Detect');
-      
-      const token = localStorage.getItem('token');
-      const analyzeRes = await axios.post(`${baseUrl}/inference/analyze`, formData, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      
-      const diagnosisData = analyzeRes.data.fullResult || analyzeRes.data;
+      let retries = 0;
+      const maxRetries = 2;
 
-      // 2. Fetch conversational context and treatment
-      const systemPromptPayload = `I just uploaded an image of my crop. Here is the raw AI diagnostic lab report: ${JSON.stringify(diagnosisData)}. Please explain this to me clearly. Mention the crop name, disease name, severity, confidence, causes, and step-by-step treatment recommendations (chemical and organic) in my selected language strictly.`;
+      const attemptUpload = async () => {
+        try {
+          // 1. Send image to pipeline
+          const formData = new FormData();
+          formData.append('image', file);
+          formData.append('cropType', 'Auto-Detect');
+          
+          const token = localStorage.getItem('token');
+          const analyzeRes = await axios.post(`${baseUrl}/inference/analyze`, formData, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          });
+          
+          const diagnosisData = analyzeRes.data.fullResult || analyzeRes.data;
 
-      const chatRes = await axios.post(`${baseUrl}/inference/chat`, {
-        message: systemPromptPayload,
-        history: messages.map(m => ({ role: m.role, text: m.text })),
-        context: { ...context, latestScan: diagnosisData, __USER_PREF_LANG: selectedLang }
-      });
+          // 2. Fetch conversational context and treatment
+          const systemPromptPayload = `I just uploaded an image of my crop. Here is the raw AI diagnostic lab report: ${JSON.stringify(diagnosisData)}. Please explain this to me clearly. Mention the crop name, disease name, severity, confidence, causes, and step-by-step treatment recommendations (chemical and organic) in my selected language strictly.`;
 
-      const replyText = chatRes.data.reply;
-      const botMessage = { role: 'assistant', text: replyText };
-      setMessages((prev) => [...prev, botMessage]);
-      speak(replyText);
+          const chatRes = await axios.post(`${baseUrl}/inference/chat`, {
+            message: systemPromptPayload,
+            history: messages.map(m => ({ role: m.role, text: m.text })),
+            context: { ...context, latestScan: diagnosisData, __USER_PREF_LANG: selectedLang }
+          });
+
+          const replyText = chatRes.data.reply;
+          const botMessage = { role: 'assistant', text: replyText };
+          setMessages((prev) => [...prev, botMessage]);
+          speak(replyText);
+          return true;
+        } catch (error) {
+          if (retries < maxRetries) {
+            retries++;
+            console.warn(`Reconnecting to Diagnostic Engine... Attempt ${retries}`);
+            await new Promise(r => setTimeout(r, 2000));
+            return attemptUpload();
+          }
+          throw error;
+        }
+      };
+
+      await attemptUpload();
 
     } catch (error) {
       console.error("Image upload failed:", error);
