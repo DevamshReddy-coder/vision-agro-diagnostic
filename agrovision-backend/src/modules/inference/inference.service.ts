@@ -53,7 +53,7 @@ export class InferenceService {
         return record;
     }
 
-    async chatWithAssistant(message: string, context?: any) {
-        return this.inferenceProcessor.chat(message, context);
+    async chatWithAssistant(message: string, history: any[] = [], context?: any) {
+        return this.inferenceProcessor.chat(message, context, history);
     }
 }

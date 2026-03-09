@@ -89,10 +89,10 @@ export class InferenceController {
     @Post('chat')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Multilingual voice-enabled agriculture assistant' })
-    async chat(@Body() body: { message: string, context?: any }) {
+    async chat(@Body() body: { message: string, history?: any[], context?: any }) {
         if (!body.message) {
             throw new BadRequestException('Message is required');
         }
-        return this.inferenceService.chatWithAssistant(body.message, body.context);
+        return this.inferenceService.chatWithAssistant(body.message, body.history, body.context);
     }
 }

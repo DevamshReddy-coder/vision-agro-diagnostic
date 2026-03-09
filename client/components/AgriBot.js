@@ -243,7 +243,7 @@ export default function AgriBot({ context }) {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
       const res = await axios.post(`${baseUrl}/inference/chat`, {
         message: textToSend,
-        // Optional directive forcing AI to output matching the user's select element
+        history: messages.map(m => ({ role: m.role, text: m.text })), // Maintain conversation memory
         context: { ...context, __USER_PREF_LANG: selectedLang }
       });
 
@@ -313,6 +313,7 @@ export default function AgriBot({ context }) {
 
       const chatRes = await axios.post(`${baseUrl}/inference/chat`, {
         message: systemPromptPayload,
+        history: messages.map(m => ({ role: m.role, text: m.text })),
         context: { ...context, latestScan: diagnosisData, __USER_PREF_LANG: selectedLang }
       });
 
