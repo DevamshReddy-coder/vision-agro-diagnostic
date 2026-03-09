@@ -209,15 +209,23 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
 User Preferred Language: ${context?.__USER_PREF_LANG || 'Detect from message'}
 ${context ? `[CURRENT DIAGNOSTIC/ENVIRONMENT CONTEXT]: ${JSON.stringify(context)}` : ''}`;
 
-        // Format history for Gemini SDK
-        const formattedHistory = history.map(m => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: m.text }]
-        }));
+        // Format history for Gemini SDK and merge consecutive same-role messages
+        const formattedHistory = [];
+        for (const m of history) {
+            const role = m.role === 'assistant' ? 'model' : 'user';
+            if (formattedHistory.length > 0 && formattedHistory[formattedHistory.length - 1].role === role) {
+                formattedHistory[formattedHistory.length - 1].parts[0].text += `\n${m.text}`;
+            } else {
+                formattedHistory.push({
+                    role,
+                    parts: [{ text: m.text }]
+                });
+            }
+        }
 
         try {
             const response = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
+                model: 'gemini-2.5-flash',
                 contents: [
                     ...formattedHistory,
                     {

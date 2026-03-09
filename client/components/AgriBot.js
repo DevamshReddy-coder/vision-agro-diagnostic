@@ -27,9 +27,7 @@ export default function AgriBot({ context }) {
       'en-US': 'Namaste! I am your AgroVision AI assistant. Ask me anything about your crops, diseases, or the diagnostic report.'
   };
 
-  const [messages, setMessages] = useState([
-    { role: 'assistant', text: INTRO_MAP['te-IN'] }
-  ]);
+  const [messages, setMessages] = useState([]); // Start empty, useEffect will push the initial intro
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(true);
@@ -47,10 +45,12 @@ export default function AgriBot({ context }) {
   }, [messages]);
 
   useEffect(() => {
-     // Push an implicit intro message when language alters actively keeping context alive
      const newIntro = INTRO_MAP[selectedLang] || INTRO_MAP['en-US'];
-     setMessages((prev) => [...prev, { role: 'assistant', text: newIntro }]);
-     // Optionally auto read the intro out loud when language changes
+     // Replace existing intro if it's the only message, or just push if different
+     setMessages((prev) => {
+       if (prev.length <= 1) return [{ role: 'assistant', text: newIntro }];
+       return [...prev, { role: 'assistant', text: newIntro }];
+     });
      speak(newIntro);
   }, [selectedLang]);
 

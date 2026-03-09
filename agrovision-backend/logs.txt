@@ -1,0 +1,58 @@
+
+> agrovision-backend@1.0.0 start
+> ts-node src/main.ts
+
+[dotenv@17.3.1] injecting env (22) from .env -- tip: ⚡️ secrets for agents: https://dotenvx.com/as2
+🚀 AgroVision AI Core Architecture running on port 5000
+📖 API Docs: http://localhost:5000/api/v1/docs
+[11:16:53.978] [32mINFO[39m (13840): [36mStarting Nest application...[39m [90m{"context":"NestFactory"}[39m
+[11:16:53.978] [33mWARN[39m (13840): [36m⚠️ Fast2SMS API Key not found - OTP will be logged to console only (development mode)[39m [90m{"context":"OtpService"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mDatabaseModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mTypeOrmModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mGatewayModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mThrottlerModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mJwtModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mAppModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mLoggerModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mTypeOrmCoreModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mTypeOrmModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mTypeOrmModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mTypeOrmModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mTypeOrmModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mTypeOrmModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mUsersModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mTelemetryModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mAnalyticsModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mLibraryModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.978] [32mINFO[39m (13840): [36mAuthModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mInferenceModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mTelemetryGateway subscribed to the "subscribe_node" message[39m [90m{"context":"WebSocketsController"}[39m
+[11:16:53.979] [33mWARN[39m (13840): [36mUnsupported route path: "/api/v1/*". In previous versions, the symbols ?, *, and + were used to denote optional or repeating path parameters. The latest version of "path-to-regexp" now requires the use of named parameters. For example, instead of using a route like /users/* to capture all routes starting with "/users", you should use /users/*path. For more details, refer to the migration guide. Attempting to auto-convert...[39m [90m{"context":"LegacyRouteConverter"}[39m
+[11:16:53.979] [33mWARN[39m (13840): [36mUnsupported route path: "/api/v1/*". In previous versions, the symbols ?, *, and + were used to denote optional or repeating path parameters. The latest version of "path-to-regexp" now requires the use of named parameters. For example, instead of using a route like /users/* to capture all routes starting with "/users", you should use /users/*path. For more details, refer to the migration guide. Attempting to auto-convert...[39m [90m{"context":"LegacyRouteConverter"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mAuthController {/api/v1/auth}:[39m [90m{"context":"RoutesResolver"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/auth/login, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/auth/register, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/auth/google, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/auth/logout, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/auth/otp/send, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/auth/otp/verify, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mTelemetryController {/api/v1/telemetry}:[39m [90m{"context":"RoutesResolver"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/telemetry/ingest, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/telemetry/nodes/:nodeId, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/telemetry/dashboard/aggregate, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mInferenceController {/api/v1/inference}:[39m [90m{"context":"RoutesResolver"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/inference/analyze, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/inference/jobs/:reportId, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/inference/chat, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mAnalyticsController {/api/v1/analytics}:[39m [90m{"context":"RoutesResolver"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/analytics/health-overview, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/analytics/overview, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/analytics/environmental-impact, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/analytics/system-status, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mLibraryController {/api/v1/library}:[39m [90m{"context":"RoutesResolver"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/library, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/library/metrics, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/library/:id, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/library, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mMapped {/api/v1/library/:id, PUT} route[39m [90m{"context":"RouterExplorer"}[39m
+[11:16:53.979] [32mINFO[39m (13840): [36mNest application successfully started[39m [90m{"context":"NestApplication"}[39m
