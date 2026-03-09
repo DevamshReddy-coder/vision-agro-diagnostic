@@ -283,7 +283,7 @@ export default function AgriBot({ context }) {
           'en-US': "I'm sorry, I'm having trouble connecting to the neural lab. Please try again."
       };
       
-      const errorText = errorMap[selectedLang] || errorMap['en-US'];
+      const errorText = error.response?.data?.message || errorMap[selectedLang] || errorMap['en-US'];
       const errorMessage = { role: 'assistant', text: errorText };
       
       setMessages((prev) => [...prev, errorMessage]);
@@ -371,7 +371,7 @@ export default function AgriBot({ context }) {
           'en-US': "I'm sorry, I couldn't process the image right now. Please try a clearer image."
       };
       
-      const errorText = errorMap[selectedLang] || errorMap['en-US'];
+      const errorText = error.response?.data?.message || errorMap[selectedLang] || errorMap['en-US'];
       const errorMessage = { role: 'assistant', text: errorText };
       
       setMessages((prev) => [...prev, errorMessage]);
