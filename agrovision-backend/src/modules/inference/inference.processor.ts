@@ -117,7 +117,7 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
 
             this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 50 });
             const response = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
+                model: 'gemini-2.0-flash',
                 contents: [
                     {
                         role: 'user',
@@ -232,7 +232,7 @@ ${context ? `[CURRENT DIAGNOSTIC/ENVIRONMENT CONTEXT]: ${JSON.stringify(context)
 
         try {
             const response = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
+                model: 'gemini-2.0-flash',
                 contents: [
                     ...formattedHistory,
                     {
