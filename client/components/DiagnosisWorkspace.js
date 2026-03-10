@@ -23,9 +23,24 @@ export default function DiagnosisWorkspace() {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // 1. Initialize Real-Time WebSocket Connection
-    socketRef.current = io(process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace('/api/v1', '') : 'http://localhost:5000');
+    // 1. Initialize Real-Time WebSocket Connection Safely
+    const rawUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const socketUrl = rawUrl.replace('/api/v1', '');
     
+    try {
+      socketRef.current = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        forceNew: true,
+        reconnectionAttempts: 3
+      });
+      
+      if (!socketRef.current) throw new Error("Socket instantiation failed");
+    } catch (err) {
+      console.error("Critical: Real-time telemetry gateway failed to initialize.", err);
+    }
+    
+    if (!socketRef.current) return;
+
     // 2. Listen for background Inference Progress
     socketRef.current.on('inference_progress', (data) => {
        console.log("WS Data Received:", data);
@@ -70,7 +85,7 @@ export default function DiagnosisWorkspace() {
 
     // fetchHistory();
     return () => {
-      socketRef.current.disconnect();
+      if (socketRef.current) socketRef.current.disconnect();
     };
   }, []);
 

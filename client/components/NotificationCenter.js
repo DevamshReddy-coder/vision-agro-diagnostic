@@ -12,8 +12,21 @@ export default function NotificationCenter() {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    // 1. Establish WebSocket connection
-    socketRef.current = io(process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace('/api/v1', '') : 'http://localhost:5000');
+    // 1. Establish WebSocket connection safely
+    const rawUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const socketUrl = rawUrl.replace('/api/v1', '');
+
+    try {
+      socketRef.current = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        forceNew: true,
+        reconnectionAttempts: 3
+      });
+    } catch (err) {
+      console.error("Telemetry notification gateway failed:", err);
+    }
+
+    if (!socketRef.current) return;
 
     // 2. Listen for critical alerts from the AI / Environment Engine
     socketRef.current.on('alert_critical', (data) => {
@@ -64,7 +77,7 @@ export default function NotificationCenter() {
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      socketRef.current.disconnect();
+      if (socketRef.current) socketRef.current.disconnect();
     };
   }, []);
 
