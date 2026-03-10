@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Volume2, VolumeX, Send, Bot, User, X, Loader2, Globe, Camera } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, Send, Bot, User, X, Loader2, Globe, Camera, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 
