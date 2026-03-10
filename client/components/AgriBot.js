@@ -164,31 +164,44 @@ export default function AgriBot({ context }) {
       const targetLang = selectedLang.toLowerCase().replace('_', '-');
       const targetPrefix = targetLang.split('-')[0];
 
-      // 1. Rigorous search for Google Network Voices for highest quality regional language
+      // Find the language name for reference
+      const langName = SUPPORTED_LANGUAGES.find(l => l.code === selectedLang)?.name || 'the selected language';
+
+      // 1. Rigorous search for Google Network Voices or High Quality voices
       let bestVoice = voices.find(v => 
         (v.lang.toLowerCase().replace('_', '-') === targetLang || 
          v.lang.toLowerCase().startsWith(targetPrefix)) && 
-        v.name.includes('Google')
+        (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium'))
       );
       
-      // 2. Fallback to any exact match OS Voice (e.g. te-IN)
+      // 2. Fallback to any voice that mentions the language name in its descriptive name
+      if (!bestVoice) {
+        bestVoice = voices.find(v => 
+          v.name.toLowerCase().includes(targetPrefix) || 
+          (langName !== 'English' && v.name.toLowerCase().includes(langName.toLowerCase().split(' ')[0]))
+        );
+      }
+
+      // 3. Fallback to any exact match OS Voice (e.g. te-IN)
       if (!bestVoice) {
         bestVoice = voices.find(v => v.lang.toLowerCase().replace('_', '-') === targetLang);
       }
       
-      // 3. Fallback to generic prefix match (e.g. 'te' matching 'te-IN')
+      // 4. Fallback to generic prefix match (e.g. 'te' matching 'te-IN')
       if (!bestVoice) {
          bestVoice = voices.find(v => v.lang.toLowerCase().startsWith(targetPrefix));
       }
       
       if (bestVoice) {
+        console.log(`[Voice Matrix] Selecting voice: ${bestVoice.name} for ${selectedLang}`);
         utterance.voice = bestVoice;
         utterance.lang = bestVoice.lang;
       } else {
+        console.warn(`[Voice Matrix] No native voice found for ${selectedLang}, falling back to default engine.`);
         utterance.lang = selectedLang;
       }
 
-      utterance.rate = 1.0; 
+      utterance.rate = 0.95; // Slightly slower for better clarity in rural advisory
       utterance.pitch = 1.0; 
       utterance.volume = 1.0;
       
@@ -331,7 +344,18 @@ export default function AgriBot({ context }) {
           const diagnosisData = analyzeRes.data.fullResult || analyzeRes.data;
 
           // 2. Fetch conversational context and treatment
-          const systemPromptPayload = `I just uploaded an image of my crop. Here is the raw AI diagnostic lab report: ${JSON.stringify(diagnosisData)}. Please explain this to me clearly. Mention the crop name, disease name, severity, confidence, causes, and step-by-step treatment recommendations (chemical and organic) in my selected language strictly.`;
+          const targetLangName = SUPPORTED_LANGUAGES.find(l => l.code === selectedLang)?.name || 'English';
+          const systemPromptPayload = `I just uploaded an image of my crop. Here is the raw AI diagnostic lab report: ${JSON.stringify(diagnosisData)}. 
+          
+          CRITICAL INSTRUCTION: You MUST explain this result to me only in ${targetLangName} (${selectedLang}). Do NOT use any other language.
+          
+          Provide a natural conversational explanation covering:
+          1. Detected Crop and Disease names.
+          2. Confidence and Severity levels.
+          3. Possible environmental causes based on my context.
+          4. Detailed step-by-step treatment (both chemical and organic/natural remedies).
+          
+          Speak directly to the farmer. Keep it professional but accessible.`;
 
           const chatRes = await axios.post(`${baseUrl}/inference/chat`, {
             message: systemPromptPayload,
