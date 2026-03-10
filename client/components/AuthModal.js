@@ -89,31 +89,38 @@ const AuthModalContentUI = ({ onClose, screen, setScreen, error, setError, succe
             className="relative bg-white w-full max-w-[420px] rounded-[2.5rem] shadow-[0_60px_120px_rgba(0,0,0,0.25)] overflow-hidden"
           >
             {/* ── Header strip ── */}
-            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 px-8 pt-10 pb-8 relative overflow-hidden">
-              <div className="absolute -top-8 -right-8 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl" />
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-400/5 rounded-full blur-xl" />
+            <div className="bg-slate-950 px-8 pt-12 pb-10 relative overflow-hidden">
+              {/* Neural Grid Overlay */}
+              <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+              <div className="absolute -top-12 -right-12 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute -bottom-8 -left-8 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-transparent to-slate-900"></div>
 
               {/* Close button */}
-              <button onClick={onClose} className="absolute top-5 right-6 text-slate-400 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-full">
-                <X size={18} />
+              <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-all p-2 bg-white/5 hover:bg-white/10 rounded-xl z-20">
+                <X size={20} />
               </button>
 
               {/* Brand mark */}
-              <div className="flex items-center gap-3 mb-6 relative z-10">
-                <div className="w-9 h-9 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                  <Leaf size={18} className="text-white" fill="currentColor" />
+              <div className="flex items-center gap-4 mb-8 relative z-10">
+                <div className="w-11 h-11 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)] relative group">
+                  <Leaf size={22} className="text-white group-hover:scale-110 transition-transform" fill="currentColor" />
+                  <div className="absolute inset-0 bg-white/20 rounded-2xl animate-ping opacity-20 group-hover:opacity-40 transition-opacity"></div>
                 </div>
-                <span className="text-white font-black text-sm tracking-wider">AGROVISION <span className="text-emerald-400">AI</span></span>
+                <div className="flex flex-col">
+                   <span className="text-white font-black text-sm tracking-widest uppercase">AGROVISION <span className="text-emerald-400">AI</span></span>
+                   <span className="text-[8px] font-black text-emerald-500/60 uppercase tracking-[0.4em] mt-1">Auth Protocol Active</span>
+                </div>
               </div>
 
               <div className="relative z-10">
-                <h2 className="text-white font-black text-3xl leading-tight tracking-tight">
-                  {isRegister ? 'Create Account' : 'Welcome Back'}
+                <h2 className="text-white font-black text-3xl leading-none tracking-tighter uppercase">
+                  {isRegister ? 'New Account' : 'Welcome Sync'}
                 </h2>
-                <p className="text-slate-400 text-sm mt-2 font-medium">
+                <p className="text-slate-400 text-[11px] mt-3 font-black uppercase tracking-widest">
                   {isRegister
-                    ? 'Join the global agricultural intelligence network'
-                    : 'Sign in to access your AI diagnostic dashboard'}
+                    ? 'Join the global agricultural sync'
+                    : 'Access your neural dashboard'}
                 </p>
               </div>
             </div>

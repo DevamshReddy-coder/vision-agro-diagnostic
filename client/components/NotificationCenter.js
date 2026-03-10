@@ -117,16 +117,18 @@ export default function NotificationCenter() {
             transition={{ duration: 0.2 }}
             className="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-[2rem] shadow-[0_25px_60px_rgba(0,0,0,0.12)] border border-slate-100 overflow-hidden z-[110]"
           >
-            <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between bg-slate-900 text-white">
-              <div>
-                 <h4 className="text-sm font-black tracking-tight flex items-center gap-2">
-                    <History size={16} className="text-emerald-400" /> Activity Log
-                 </h4>
-                 <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1">Real-Time Event Stream</p>
-              </div>
-              <div className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 bg-white/10 rounded-lg text-white">
-                 Live
-              </div>
+            <div className="px-6 py-6 border-b border-white/5 flex items-center justify-between bg-slate-950 text-white relative overflow-hidden">
+               {/* Neural Grid Overlay */}
+               <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+               <div className="relative z-10">
+                  <h4 className="text-sm font-black tracking-tight flex items-center gap-2 uppercase">
+                     <History size={16} className="text-emerald-400" /> Activity Log
+                  </h4>
+                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1">Real-Time Event Stream</p>
+               </div>
+               <div className="relative z-10 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 bg-emerald-500 text-white rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+                  Live
+               </div>
             </div>
 
             <div className="max-h-[380px] overflow-y-auto w-full">

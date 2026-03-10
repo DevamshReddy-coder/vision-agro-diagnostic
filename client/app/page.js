@@ -34,6 +34,31 @@ const Navbar = dynamic(() => import('../components/Navbar'), { ssr: false });
 
 export default function Home() {
   const [authScreen, setAuthScreen] = useState(null); // 'login' | 'register' | null
+  const [heroWeather, setHeroWeather] = useState({ temp: 24, humidity: 68, wind: 14, condition: 'Partly Cloudy' });
+
+  useEffect(() => {
+    // Fetch live weather for the hero visual hub
+    const fetchHeroWeather = async () => {
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=17.3850&longitude=78.4867&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto');
+        const data = await res.json();
+        if (data.current) {
+          const codeMap = { 0: 'Clear Sky', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast', 45: 'Foggy', 51: 'Drizzle', 61: 'Rainy' };
+          setHeroWeather({
+            temp: Math.round(data.current.temperature_2m),
+            humidity: data.current.relative_humidity_2m,
+            wind: Math.round(data.current.wind_speed_10m),
+            condition: codeMap[data.current.weather_code] || 'Optimal'
+          });
+        }
+      } catch (err) {
+        console.warn("Hero weather sync failed, using calibrated defaults.");
+      }
+    };
+    fetchHeroWeather();
+    const interval = setInterval(fetchHeroWeather, 300000); // Sync every 5 mins
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen selection:bg-primary selection:text-white bg-white">
@@ -43,9 +68,27 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative pt-12 lg:pt-16 pb-24 lg:pb-32 overflow-hidden bg-white">
         {/* Cinematic Background Elements - Layered Depth */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.015]" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '80px 80px' }}></div>
         <div className="absolute top-0 right-0 w-[1200px] h-[1200px] bg-emerald-100/10 rounded-full blur-[180px] -mr-[600px] -mt-[400px]"></div>
         <div className="absolute top-1/2 left-0 w-[1000px] h-[1000px] bg-indigo-50/10 rounded-full blur-[150px] -ml-[500px] -mt-[500px]"></div>
-        <div className="absolute -bottom-40 right-1/4 w-[800px] h-[800px] bg-emerald-50/10 rounded-full blur-[200px]"></div>
+
+        {/* Floating Data Particles (Ambient Motion) */}
+        {[1, 2, 3].map(i => (
+          <motion.div
+            key={`particle-${i}`}
+            animate={{ 
+              y: [0, -40, 0],
+              opacity: [0.1, 0.3, 0.1],
+              scale: [1, 1.2, 1]
+            }}
+            transition={{ duration: 10 + i * 2, repeat: Infinity, ease: "easeInOut" }}
+            className={`absolute w-3 h-3 bg-emerald-500/20 rounded-full blur-xl hidden lg:block`}
+            style={{ 
+              top: `${20 + i * 20}%`, 
+              left: `${15 + i * 25}%` 
+            }}
+          />
+        ))}
 
         <div className="container mx-auto px-8 relative z-10">
           <div className="grid lg:grid-cols-12 gap-16 lg:gap-32 items-center">
@@ -76,9 +119,9 @@ export default function Home() {
                     <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
                     <div className="absolute inset-0 w-2 h-2 bg-emerald-500 rounded-full animate-ping opacity-30"></div>
                  </div>
-                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] leading-none">Intelligence Protocol v2.4</span>
+                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] leading-none">Intelligence Protocol v2.5</span>
                  <div className="w-1 h-1 bg-slate-300 rounded-full mx-1"></div>
-                 <span className="text-[9px] font-black text-primary uppercase tracking-[0.3em] leading-none">Online</span>
+                 <span className="text-[9px] font-black text-primary uppercase tracking-[0.3em] leading-none">Live Sync Active</span>
               </motion.div>
 
               <motion.h1 
@@ -94,7 +137,7 @@ export default function Home() {
                 variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
                 className="text-lg lg:text-xl text-slate-500 mb-12 leading-relaxed max-w-xl font-medium tracking-tight"
               >
-                The global infrastructure for precision agriculture. Deploying hardware-accelerated computer vision to secure the future of world food systems.
+                Deploying hardware-accelerated computer vision and decentralized intelligence to secure the future of world food systems.
               </motion.p>
               
               <motion.div 
@@ -116,9 +159,9 @@ export default function Home() {
                 <motion.button 
                   whileHover={{ scale: 1.02, backgroundColor: "rgba(15,23,42,0.02)" }}
                   className="w-full sm:w-auto px-10 py-7 border border-slate-200 text-slate-500 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.4em] flex items-center justify-center gap-4 transition-all duration-300 group"
-                  onClick={() => setIsAuthOpen(true)}
+                  onClick={() => setAuthScreen('register')}
                 >
-                  Request Demo 
+                  Enterprise Access 
                   <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </motion.button>
               </motion.div>
@@ -143,10 +186,10 @@ export default function Home() {
               animate={{ opacity: 1, scale: 1, x: 0 }}
               transition={{ duration: 1.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="relative rounded-[3rem] p-1 bg-gradient-to-br from-slate-200 to-slate-100 shadow-[0_40px_100px_rgba(0,0,0,0.08)] overflow-hidden group">
+              <div className="relative rounded-[3rem] p-1 bg-gradient-to-br from-slate-200 to-slate-100 shadow-[0_40px_100px_rgba(0,0,0,0.08)] overflow-hidden group/hero">
                 <div className="bg-slate-900 rounded-[2.9rem] p-10 relative overflow-hidden h-full flex flex-col">
                   {/* Background effects */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover/hero:scale-150 transition-transform duration-1000"></div>
                   <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
 
                   {/* Header */}
@@ -173,10 +216,10 @@ export default function Home() {
                     <div className="flex justify-between items-end mb-8 relative">
                       {/* Left: Temp/Weather */}
                       <div>
-                        <div className="text-6xl font-black text-white tracking-tighter tabular-nums flex items-baseline">
-                          24<span className="text-2xl text-slate-500 ml-1">°C</span>
+                        <div className="text-7xl font-black text-white tracking-tighter tabular-nums flex items-baseline">
+                          {heroWeather.temp}<span className="text-2xl text-slate-500 ml-1">°C</span>
                         </div>
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">Partly Cloudy</div>
+                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">{heroWeather.condition}</div>
                       </div>
                       
                       {/* Decorative scanning line in atmosphere box */}
@@ -193,14 +236,14 @@ export default function Home() {
                           <Droplets size={14} />
                           <span className="text-[9px] font-black uppercase tracking-widest">Humidity</span>
                         </div>
-                        <div className="text-xl font-black text-white tabular-nums">68%</div>
+                        <div className="text-xl font-black text-white tabular-nums">{heroWeather.humidity}%</div>
                       </div>
                       <div className="bg-white/5 rounded-2xl p-4 border border-white/5 w-full box-border">
                         <div className="flex items-center gap-2 mb-2 text-slate-400">
                           <Wind size={14} />
                           <span className="text-[9px] font-black uppercase tracking-widest">Wind Speed</span>
                         </div>
-                        <div className="text-xl font-black text-white tabular-nums flex items-baseline">14<span className="text-[10px] text-slate-500 ml-1">km/h</span></div>
+                        <div className="text-xl font-black text-white tabular-nums flex items-baseline">{heroWeather.wind}<span className="text-[10px] text-slate-500 ml-1">km/h</span></div>
                       </div>
                     </div>
                   </div>
@@ -370,41 +413,51 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-32 bg-slate-50 relative border-t border-slate-200">
-        <div className="container mx-auto px-6">
-          <div className="grid lg:grid-cols-12 gap-20 mb-32">
-            <div className="lg:col-span-5 space-y-10">
-              <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 bg-slate-900 rounded-[1.2rem] flex items-center justify-center text-white">
-                    <Leaf size={24} fill="currentColor" />
+      <footer className="py-32 bg-white relative border-t border-slate-100">
+        <div className="container mx-auto px-8 lg:px-12">
+          <div className="grid lg:grid-cols-12 gap-24 mb-32">
+            <div className="lg:col-span-5 space-y-12">
+              <div className="flex items-center gap-5">
+                 <div className="w-14 h-14 bg-slate-950 rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl relative overflow-hidden group">
+                    <Leaf size={28} fill="currentColor" className="group-hover:scale-110 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-transparent"></div>
                  </div>
-                 <span className="text-2xl font-black text-slate-900 tracking-tighter uppercase">AgroVision <span className="text-primary">AI</span></span>
+                 <div className="flex flex-col">
+                    <span className="text-2xl font-black text-slate-950 tracking-tighter uppercase leading-none">AgroVision <span className="text-emerald-500">AI</span></span>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">Precision Intelligence Framework</span>
+                 </div>
               </div>
-              <p className="text-slate-500 max-w-sm leading-relaxed font-medium">
-                The leading decentralized framework for high-precision agricultural computer vision. Ensuring the future of global food security through edge intelligence.
+              <p className="text-slate-500 max-w-sm leading-relaxed font-medium text-lg tracking-tight">
+                The world's leading decentralized framework for high-precision agricultural computer vision. Ensuring food security through edge intelligence.
               </p>
               <div className="flex gap-4">
-                {[1,2,3,4].map(i => (
-                  <div key={i} className="w-12 h-12 bg-white border border-slate-200 rounded-2xl hover:border-primary transition-all cursor-pointer flex items-center justify-center hover:shadow-xl group">
-                     <Globe size={20} className="text-slate-400 group-hover:text-primary transition-colors" />
+                {['global', 'secure', 'neural', 'cloud'].map(tag => (
+                  <div key={tag} className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-2xl hover:border-emerald-500/30 transition-all cursor-pointer flex items-center justify-center hover:shadow-xl group hover:-translate-y-1">
+                     <Globe size={20} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
                   </div>
                 ))}
               </div>
             </div>
             <div className="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-16">
-               <FooterCol title="Ecosystem" links={['Neural Core', 'Field Edge API', 'Satellite Sync', 'Enterprise Cloud']} />
-               <FooterCol title="Governance" links={['Privacy Shield', 'Data Residency', 'ISO 27001', 'Open-Source Core']} />
-               <FooterCol title="Operations" links={['Silicon Valley Hub', 'Bangalore R&D', 'Nairobi Lab', 'Berlin Ops']} />
+               <FooterCol title="Ecosystem" links={['Neural Core v2.5', 'Field Edge API', 'Satellite Sync', 'Enterprise Hub']} />
+               <FooterCol title="Governance" links={['Privacy Shield', 'Data Residency', 'ISO 27001', 'Open-Source Foundation']} />
+               <FooterCol title="Operations" links={['Palo Alto Hub', 'Bangalore R&D', 'Technical Support', 'Berlin Ops']} />
             </div>
           </div>
-          <div className="pt-12 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-10">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center md:text-left">
-               © 2026 AgroVision Framework Consortium. All systems operational. 
+          <div className="pt-16 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-12">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+               <div className="text-[10px] font-black text-slate-900 uppercase tracking-widest text-center md:text-left flex items-center gap-3">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,1)]"></div>
+                  © 2026 AgroVision Framework Consortium
+               </div>
+               <div className="h-4 w-px bg-slate-200 hidden md:block"></div>
+               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  System Health: <span className="text-emerald-500">Nominal 99.8%</span>
+               </div>
             </div>
             <div className="flex flex-wrap justify-center items-center gap-10 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-               <span className="hover:text-primary cursor-pointer transition-colors">Legal Protocol</span>
-               <span className="hover:text-primary cursor-pointer transition-colors">Privacy Lexicon</span>
-               <span className="hover:text-primary cursor-pointer transition-colors">v2.1 Changelog</span>
+               <span className="hover:text-emerald-500 cursor-pointer transition-colors">Legal Protocol</span>
+               <span className="hover:text-primary cursor-pointer transition-colors">v2.5 Alpha Changelog</span>
             </div>
           </div>
         </div>

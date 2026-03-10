@@ -131,12 +131,13 @@ export default function AnalyticsDashboard() {
   const dynamicActions = generateActions(stats);
 
   return (
-    <section className="py-32 bg-[#fafafa] relative overflow-hidden" id="analytics">
+    <section className="py-32 bg-white relative overflow-hidden" id="analytics">
       {/* Background Architectural Grid */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
-      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+      <div className="absolute inset-0 pointer-events-none opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '60px 60px' }}></div>
+      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-emerald-50 rounded-full blur-[150px] -mr-[400px] -mt-[200px] opacity-60"></div>
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-50 rounded-full blur-[120px] -ml-[300px] -mb-[300px] opacity-40"></div>
 
-      <div className="container mx-auto px-6 md:px-8 relative z-10">
+      <div className="container mx-auto px-8 lg:px-12 relative z-10">
         
         {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-10 mb-16">

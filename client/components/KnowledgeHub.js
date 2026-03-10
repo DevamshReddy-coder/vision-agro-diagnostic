@@ -114,20 +114,22 @@ export default function KnowledgeHub() {
               Verified repository of global plant pathogens, diagnostic signatures, and localized intervention protocols.
             </p>
           </div>
-          <div className="relative w-full md:w-[450px] group">
-             <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+          <div className="relative w-full md:w-[480px] group">
+             <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none z-10">
                 <Search size={20} className="text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
              </div>
              <input 
                type="text" 
-               placeholder="Search by pathogen or specimen type..." 
-               className="w-full pl-16 pr-8 py-6 rounded-[2rem] bg-slate-50 border border-slate-100 focus:border-emerald-500/30 outline-none font-black text-xs uppercase tracking-widest transition-all focus:bg-white focus:shadow-2xl focus:shadow-emerald-500/5 placeholder:text-slate-400 placeholder:font-bold"
+               placeholder="Omni-search biological signatures..." 
+               className="w-full pl-16 pr-20 py-7 rounded-[2.5rem] bg-slate-50 border-2 border-slate-100 focus:border-emerald-500/40 outline-none font-black text-[11px] uppercase tracking-widest transition-all focus:bg-white focus:shadow-[0_20px_60px_-15px_rgba(16,185,129,0.15)] placeholder:text-slate-400 placeholder:font-bold"
                value={searchTerm}
                onChange={(e) => setSearchTerm(e.target.value)}
              />
-             <div className="absolute right-6 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-200/50 rounded flex gap-1 items-center">
-                <span className="text-[9px] font-black text-slate-500">⌘</span>
-                <span className="text-[9px] font-black text-slate-500">K</span>
+             <div className="absolute right-6 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-200/50 rounded-xl flex gap-1.5 items-center backdrop-blur-sm">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Search</span>
+                <div className="flex gap-1">
+                   <span className="px-1.5 py-0.5 bg-white rounded-md text-[9px] font-black text-slate-700 shadow-sm">K</span>
+                </div>
              </div>
           </div>
         </div>
@@ -165,12 +167,12 @@ export default function KnowledgeHub() {
                       </span>
                     </div>
                     
-                       <div className="space-y-2">
-                       <h3 className="text-3xl lg:text-4xl font-black text-slate-900 uppercase tracking-tight group-hover:text-emerald-600 transition-colors leading-none">
-                         {d.name}
-                       </h3>
-
-                    </div>
+                       <div className="flex items-center gap-3">
+                         <h3 className="text-3xl lg:text-4xl font-black text-slate-900 uppercase tracking-tight group-hover:text-emerald-600 transition-colors leading-none">
+                           {d.name}
+                         </h3>
+                         <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em] font-mono">{d.code}</span>
+                      </div>
 
                     <p className="text-sm text-slate-500 font-medium leading-relaxed tracking-tight line-clamp-2 max-w-xl group-hover:text-slate-600 transition-colors">
                       {d.symptoms}
@@ -205,13 +207,23 @@ export default function KnowledgeHub() {
                        </div>
                     </div>
 
-                    <div className="relative h-48 bg-slate-950/50 rounded-[2.5rem] border border-white/5 mb-8 flex items-center justify-center overflow-hidden group">
-                       <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at center, #10b981 1px, transparent 1px)', backgroundSize: '16px 16px' }}></div>
+                    <div className="relative h-48 bg-slate-950 rounded-[2.5rem] border border-white/5 mb-8 flex items-center justify-center overflow-hidden group/map">
+                       <div className="absolute inset-0 opacity-[0.1] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at center, #10b981 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
                        
-                       <MapPin className="text-emerald-500 relative z-10 group-hover:scale-110 transition-transform" size={40} strokeWidth={1.5} />
-                       
-                       {/* Radar ring effect */}
-                       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border border-emerald-500/20 rounded-full animate-ping"></div>
+                       <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                          <motion.div 
+                             animate={{ left: ['-10%', '110%'] }}
+                             transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                             className="absolute top-0 bottom-0 w-px bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,1)] opacity-40"
+                          />
+                       </div>
+
+                       <div className="relative z-10 flex flex-col items-center">
+                          <div className="relative">
+                             <MapPin className="text-emerald-500 group-hover/map:scale-110 transition-transform duration-700" size={48} strokeWidth={1} />
+                             <div className="absolute inset-0 bg-emerald-500 rounded-full blur-2xl opacity-20 animate-pulse"></div>
+                          </div>
+                       </div>
                     </div>
 
                     <div className="space-y-3 mb-10">

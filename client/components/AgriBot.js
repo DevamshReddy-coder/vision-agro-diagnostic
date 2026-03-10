@@ -412,14 +412,20 @@ export default function AgriBot({ context }) {
       <AnimatePresence>
         {!isOpen && (
           <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            initial={{ scale: 0, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            whileTap={{ scale: 0.9 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-8 right-8 w-16 h-16 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-colors group z-[9999] border-4 border-white"
+            className="fixed bottom-10 right-10 w-20 h-20 bg-slate-950 text-white rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(16,185,129,0.5)] flex items-center justify-center transition-all group z-[9999] border border-white/10"
           >
-            <div className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-20"></div>
-            <Bot size={32} className="group-hover:scale-110 transition-transform" />
+            <div className="absolute inset-0 rounded-[2rem] bg-emerald-500/20 animate-pulse transition-opacity group-hover:opacity-40"></div>
+            <div className="absolute -top-12 right-0 bg-slate-900 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all shadow-premium pointer-events-none whitespace-nowrap">
+               Neural Cloud Agent Online
+            </div>
+            <Bot size={36} className="text-emerald-400 group-hover:scale-110 transition-transform relative z-10" />
+            <Activity size={12} className="absolute bottom-4 right-4 text-emerald-500 animate-pulse z-10" />
           </motion.button>
         )}
       </AnimatePresence>

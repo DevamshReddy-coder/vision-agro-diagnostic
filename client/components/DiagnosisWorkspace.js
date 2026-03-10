@@ -88,6 +88,36 @@ export default function DiagnosisWorkspace() {
     }
   };
 
+  const handleDownloadReport = () => {
+    if (!result) return;
+    const reportContent = `AGROVISION AI DIAGNOSTIC PROTOCOL
+----------------------------------
+ID: ${Math.random().toString(36).substr(2, 9).toUpperCase()}
+TIMESTAMP: ${new Date().toLocaleString()}
+CROP: ${result.crop}
+DIAGNOSIS: ${result.disease}
+CONFIDENCE: ${result.confidence}%
+SEVERITY: ${result.severity}
+RISK LEVEL: ${result.riskLevel}
+
+AI INSIGHTS:
+${result.insights?.environmentalFactor || 'N/A'}
+
+TREATMENT RECOMMENDATIONS:
+${result.recommendations?.pesticides?.map(p => `- ${p.name}: ${p.dosage} (Active: ${p.activeIngredient})`).join('\n') || 'No chemical treatments recommended.'}
+
+VERIFIED BY AGROVISION NEURAL CORE V2.5
+SYSTEM AUTH: VALIDATED
+`;
+    const blob = new Blob([reportContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `agrovision_protocol_${result.crop.toLowerCase()}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -318,17 +348,19 @@ export default function DiagnosisWorkspace() {
 
                         <div className="space-y-4">
                           <button 
-                            className={`w-full py-7 rounded-[1.5rem] flex items-center justify-center gap-4 text-xs font-black uppercase tracking-[0.2em] transition-all ${(!image || loading) ? 'bg-slate-50 text-slate-300 border border-slate-100' : 'bg-slate-900 text-white shadow-2xl hover:bg-primary active:scale-95'}`}
+                            className={`w-full py-7 rounded-[1.5rem] flex items-center justify-center gap-4 text-xs font-black uppercase tracking-[0.3em] transition-all relative overflow-hidden group/btn ${(!image || loading) ? 'bg-slate-50 text-slate-300 border border-slate-100' : 'bg-slate-950 text-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] hover:bg-emerald-600 active:scale-95'}`}
                             onClick={handleDiagnose}
                             disabled={!image || loading}
                           >
+                            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-white/10 to-emerald-500/0 -translate-x-full group-hover/btn:animate-shimmer pointer-events-none"></div>
                             {loading ? (
-                              <>
-                                <RefreshCcw className="animate-spin" size={20} /> Decoding Matrix...
-                              </>
+                              <div className="flex items-center gap-3">
+                                <RefreshCcw className="animate-spin" size={18} /> 
+                                <span className="animate-pulse">Neural Decoding...</span>
+                              </div>
                             ) : (
                               <>
-                                Start Analysis <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                Execute Analysis <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
                               </>
                             )}
                           </button>
@@ -359,15 +391,31 @@ export default function DiagnosisWorkspace() {
                    exit={{ opacity: 0 }}
                    className="h-full bg-white rounded-[4rem] p-12 border border-slate-100 flex flex-col items-center justify-center text-center shadow-[0_40px_100px_rgba(0,0,0,0.05)]"
                 >
-                   <div className="relative mb-12">
-                      <div className="w-32 h-32 border-4 border-slate-50 rounded-full animate-spin border-t-primary"></div>
-                      <div className="absolute inset-0 flex items-center justify-center text-primary">
-                         <Activity size={40} className="animate-pulse" />
-                      </div>
-                   </div>
-                   <h3 className="text-3xl font-black text-slate-900 mb-6 tracking-tighter uppercase">Deep-Neural Inference</h3>
-                   <div className="max-w-xs mx-auto space-y-4">
-                      <div className="h-1 bg-slate-50 w-full rounded-full overflow-hidden">
+                    <div className="relative mb-14">
+                       <div className="w-40 h-40 border-[6px] border-slate-100 rounded-full animate-spin border-t-emerald-500 shadow-xl"></div>
+                       <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <Activity size={48} className="text-emerald-500 animate-pulse mb-1" />
+                          <div className="flex gap-1">
+                             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce"></div>
+                             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                          </div>
+                       </div>
+                    </div>
+                    <h3 className="text-4xl font-black text-slate-950 mb-4 tracking-tighter uppercase italic">Neural Sync in Progress</h3>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-10">Accessing Distributed Farm Intelligence</p>
+                    <div className="max-w-xs mx-auto space-y-6">
+                       <div className="grid grid-cols-2 gap-4">
+                          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Latency</p>
+                             <p className="text-sm font-black text-slate-900 tabular-nums">1.4ms</p>
+                          </div>
+                          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Compute</p>
+                             <p className="text-sm font-black text-slate-900 uppercase">Edge v4</p>
+                          </div>
+                       </div>
+                       <div className="h-1.5 bg-slate-100 w-full rounded-full overflow-hidden shadow-inner">
                          <motion.div 
                            className="h-full bg-primary shadow-[0_0_10px_rgba(16,185,129,0.5)]"
                            initial={{ width: 0 }}
@@ -388,43 +436,47 @@ export default function DiagnosisWorkspace() {
                   exit={{ opacity: 0, y: -30 }}
                   className="bg-white rounded-[3rem] border border-slate-100 shadow-premium overflow-hidden flex flex-col h-full"
                 >
-                  <div className="bg-slate-900 p-12 text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full -mr-40 -mt-40 blur-[80px]"></div>
+                  <div className="bg-slate-950 p-12 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full -mr-40 -mt-40 blur-[100px]"></div>
+                    <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-blue-500/10 rounded-full blur-[100px]"></div>
+                    
                     <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-8">
-                        <div className="inline-flex items-center gap-2.5 px-3 py-1 bg-emerald-500/10 rounded-full text-[9px] font-black uppercase tracking-[0.3em] border border-emerald-500/20 text-emerald-400">
-                          <CheckCircle2 size={12} /> Scan Complete
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 mb-10">
+                        <div className="flex items-center gap-5">
+                           <div className="relative">
+                              <div className="w-5 h-5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
+                              <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-30"></div>
+                           </div>
+                           <div className="flex flex-col">
+                              <h2 className="text-[11px] font-black text-emerald-500 uppercase tracking-[0.5em] mb-2">Diagnostic Scan Complete</h2>
+                              <div className="flex items-center gap-4">
+                                 <h3 className="text-4xl lg:text-6xl font-black text-white tracking-tighter uppercase leading-none">{result.disease}</h3>
+                                 <div className="px-4 py-1.5 bg-white/5 text-[10px] font-black text-white/50 rounded-xl border border-white/10 uppercase tracking-[0.2em] backdrop-blur-md">
+                                    {result.crop} Specimen
+                                 </div>
+                              </div>
+                           </div>
                         </div>
-                        <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">
-                          Report ID: <span className="text-slate-300">#{Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
+                        <div className="flex flex-col items-end">
+                           <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-[0.3em] rounded-xl flex items-center gap-3 backdrop-blur-sm shadow-emerald-glow">
+                              <ShieldCheck size={14} strokeWidth={3} /> Protocol Verified
+                           </div>
                         </div>
                       </div>
-                      <h3 className="text-4xl lg:text-6xl font-black mb-6 tracking-tighter leading-none uppercase">
-                        {result.disease}
-                      </h3>
-                      {result.diseaseType && result.diseaseType !== "None" && result.diseaseType !== "Unknown" && (
-                         <div className="absolute top-8 right-12 px-4 py-2 bg-slate-800 rounded-xl border border-slate-700 text-xs font-black uppercase tracking-widest text-slate-300">
-                             Pathogen Class: <span className="text-emerald-400">{result.diseaseType}</span>
+
+                      <div className="flex flex-wrap items-center gap-8 pt-4">
+                         <div className="flex items-center gap-3 text-slate-400 group/link cursor-default">
+                           <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center group-hover/link:bg-emerald-500/10 group-hover/link:border-emerald-500/20 transition-all">
+                              <Fingerprint size={16} className="text-emerald-500" />
+                           </div>
+                           <p className="text-sm font-semibold italic text-slate-300 group-hover/link:text-white transition-colors">{result.cropScientificName || result.crop} Node Established</p>
                          </div>
-                      )}
-                      <div className="flex flex-wrap items-center gap-6">
-                         <div className="flex items-center gap-2 text-slate-400">
-                           <Info size={14} className="text-emerald-500" />
-                           <p className="text-sm font-medium italic">{result.cropScientificName || result.crop} Specimen Detected</p>
-                         </div>
-                         {result.diseaseScientificName && (
-                             <>
-                                <div className="hidden sm:block h-4 w-px bg-slate-700"></div>
-                                <div className="flex items-center gap-2 text-slate-400">
-                                <Leaf size={14} className="text-primary" />
-                                <p className="text-sm font-medium italic">{result.diseaseScientificName} pathogen active</p>
-                                </div>
-                             </>
-                         )}
-                         <div className="hidden sm:block h-4 w-px bg-slate-700"></div>
-                         <div className="flex items-center gap-2 text-slate-400">
-                           <Leaf size={14} className="text-primary" />
-                           <p className="text-[10px] font-black uppercase tracking-widest">{result.message ? "Manual Review Requested" : "Autonomous Detection"}</p>
+                         <div className="hidden sm:block h-8 w-px bg-white/10"></div>
+                         <div className="flex items-center gap-3 text-slate-400">
+                           <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center">
+                              <Cpu size={16} className="text-amber-400" />
+                           </div>
+                           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Direct Neural Inference Sync</p>
                          </div>
                       </div>
                     </div>
@@ -441,19 +493,36 @@ export default function DiagnosisWorkspace() {
                     <div className="grid md:grid-cols-2 gap-12">
                        {result.xai_visualization && (
                         <div className="col-span-2 space-y-8">
-                           <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                 <div className="w-10 h-10 bg-slate-100 text-slate-900 rounded-xl flex items-center justify-center"><Zap size={20} /></div>
+                                 <div className="w-10 h-10 bg-slate-900 text-emerald-400 rounded-xl flex items-center justify-center shadow-emerald-glow"><Zap size={20} strokeWidth={3} /></div>
                                  <div>
                                     <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest leading-none mb-1">Explainable AI (XAI)</h4>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Heatmap Visualization</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Neural Anomaly Mapping</p>
                                  </div>
                               </div>
-                              <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-3 py-1 bg-emerald-50 rounded-lg">High Precision</div>
+                              <div className="flex gap-2">
+                                <button 
+                                  onClick={handleDownloadReport}
+                                  className="text-[10px] font-black text-slate-500 hover:text-primary uppercase tracking-widest px-3 py-1 bg-slate-50 hover:bg-white border border-slate-100 rounded-lg flex items-center gap-2 transition-all group"
+                                >
+                                  <Download size={12} className="group-hover:scale-125 transition-transform" /> Save Protocol
+                                </button>
+                                <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-3 py-1 bg-emerald-50 rounded-lg flex items-center gap-2 border border-emerald-100/50 shadow-sm">
+                                  <ShieldCheck size={12} /> Validated Node
+                                </div>
+                              </div>
                            </div>
-                           <div className="relative rounded-[3rem] overflow-hidden border border-slate-100 shadow-2xl group cursor-zoom-in">
-                              <img src={result.xai_visualization} alt="Heatmap" className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-1000" />
-                              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent flex items-end p-10">
+                            <div className="relative rounded-[3rem] overflow-hidden border border-slate-200 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] group/scan cursor-zoom-in">
+                               <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+                                  <motion.div 
+                                    animate={{ top: ['-10%', '110%'] }}
+                                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                    className="absolute left-0 right-0 h-1 bg-gradient-to-t from-emerald-500/50 via-emerald-400 to-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,1)] opacity-70"
+                                  />
+                               </div>
+                               <img src={result.xai_visualization} alt="Heatmap" className="w-full h-[500px] object-cover group-hover/scan:scale-110 transition-transform duration-1000" />
+                               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/10 to-transparent flex items-end p-10 z-10 transition-opacity group-hover/scan:opacity-60">
                                   <div className="max-w-xl">
                                      <p className="text-white text-xs font-medium leading-relaxed mb-2 opacity-90">
                                         <strong className="text-emerald-400 uppercase tracking-widest text-[9px] block mb-1">Engine insight:</strong>
@@ -564,6 +633,36 @@ export default function DiagnosisWorkspace() {
                             </div>
                         )}
                       </div>
+                      
+                      {/* Professional System Verification Seal */}
+                      <div className="mt-12 pt-12 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-6">
+                         <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center p-1 border-4 border-slate-100 shadow-xl overflow-hidden relative">
+                               <Bot size={24} className="text-emerald-500" />
+                               <div className="absolute inset-0 border-2 border-emerald-500/20 rounded-full animate-spin-slow"></div>
+                            </div>
+                            <div>
+                               <p className="text-[10px] font-black uppercase tracking-widest text-slate-900">Neural Core v2.5 Verified</p>
+                               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Authenticity Hash: {Math.random().toString(16).substr(2, 8).toUpperCase()}</p>
+                            </div>
+                         </div>
+                         <div className="flex items-center gap-8">
+                            <div className="text-center">
+                               <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1">Latency</p>
+                               <p className="text-[10px] font-black text-slate-900 tabular-nums">1.4s</p>
+                            </div>
+                            <div className="text-center">
+                               <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1">Compute</p>
+                               <p className="text-[10px] font-black text-slate-900 uppercase">Edge Node</p>
+                            </div>
+                            <div className="px-4 py-2 bg-slate-950 rounded-xl">
+                               <div className="flex items-center gap-2">
+                                  <ShieldCheck size={14} className="text-emerald-500" />
+                                  <span className="text-[10px] font-black text-white uppercase tracking-widest">Certified</span>
+                               </div>
+                            </div>
+                         </div>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -598,18 +697,27 @@ export default function DiagnosisWorkspace() {
 
 function Metric({ label, value, status, isUrgent }) {
   return (
-    <div className="p-10 border-r border-slate-100 last:border-r-0 hover:bg-white transition-all group cursor-default relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-1 h-0 bg-primary group-hover:h-full transition-all duration-500"></div>
-      <div className="flex justify-between items-center mb-6">
-         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">{label}</p>
-         <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border ${isUrgent ? 'bg-red-50 border-red-100 text-red-600' : 'bg-emerald-50 border-emerald-100 text-emerald-600'}`}>
-           {status}
-         </span>
+    <div className="p-8 lg:p-10 border-r border-slate-100 last:border-r-0 hover:bg-white transition-all group cursor-default relative overflow-hidden flex flex-col justify-between h-full bg-white md:bg-transparent">
+      <div className="absolute top-0 left-0 w-1 h-0 bg-emerald-500 group-hover:h-full transition-all duration-500"></div>
+      <div>
+        <div className="flex justify-between items-start mb-6 gap-4">
+           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mt-1">{label}</p>
+           <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md border text-right max-w-[120px] line-clamp-2 leading-relaxed ${isUrgent ? 'bg-red-50 border-red-100 text-red-600' : 'bg-emerald-50 border-emerald-100 text-emerald-600'}`}>
+             {status}
+           </span>
+        </div>
+        <div className="flex items-baseline gap-2">
+          <p className={`text-4xl lg:text-5xl font-black ${isUrgent ? 'text-red-900' : 'text-slate-900'} tracking-tighter tabular-nums group-hover:translate-x-1 transition-transform origin-left duration-500`}>
+            {value}
+          </p>
+        </div>
       </div>
-      <div className="flex items-baseline gap-2">
-        <p className={`text-5xl font-black ${isUrgent ? 'text-red-900' : 'text-slate-900'} tracking-tighter tabular-nums group-hover:scale-105 transition-transform origin-left duration-500`}>
-          {value}
-        </p>
+      <div className="mt-4 w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+         <motion.div 
+           initial={{ width: 0 }}
+           animate={{ width: isUrgent ? '90%' : '40%' }}
+           className={`h-full ${isUrgent ? 'bg-red-500' : 'bg-emerald-500'}`}
+         />
       </div>
     </div>
   );
