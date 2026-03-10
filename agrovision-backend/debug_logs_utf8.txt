@@ -1,0 +1,197 @@
+﻿
+> agrovision-backend@1.0.0 start
+> ts-node src/main.ts
+
+[dotenv@17.3.1] injecting env (22) from .env -- tip: ΓÜÖ∩╕Å  specify custom .env file path with { path: '/custom/path/.env' }
+≡ƒÜÇ AgroVision AI Core Architecture running on port 5000
+≡ƒôû API Docs: http://localhost:5000/api/v1/docs
+[12:18:36.480] [32mINFO[39m (12572): [36mStarting Nest application...[39m [90m{"context":"NestFactory"}[39m
+[12:18:36.480] [33mWARN[39m (12572): [36mΓÜá∩╕Å Fast2SMS API Key not found - OTP will be logged to console only (development mode)[39m [90m{"context":"OtpService"}[39m
+[12:18:36.480] [32mINFO[39m (12572): [36mDatabaseModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.480] [32mINFO[39m (12572): [36mTypeOrmModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.480] [32mINFO[39m (12572): [36mGatewayModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.480] [32mINFO[39m (12572): [36mThrottlerModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.480] [32mINFO[39m (12572): [36mJwtModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.480] [32mINFO[39m (12572): [36mAppModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.480] [32mINFO[39m (12572): [36mLoggerModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.480] [32mINFO[39m (12572): [36mTypeOrmCoreModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.480] [32mINFO[39m (12572): [36mTypeOrmModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.480] [32mINFO[39m (12572): [36mTypeOrmModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.480] [32mINFO[39m (12572): [36mTypeOrmModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mTypeOrmModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mTypeOrmModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mUsersModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mTelemetryModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mAnalyticsModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mLibraryModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mAuthModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mInferenceModule dependencies initialized[39m [90m{"context":"InstanceLoader"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mTelemetryGateway subscribed to the "subscribe_node" message[39m [90m{"context":"WebSocketsController"}[39m
+[12:18:36.481] [33mWARN[39m (12572): [36mUnsupported route path: "/api/v1/*". In previous versions, the symbols ?, *, and + were used to denote optional or repeating path parameters. The latest version of "path-to-regexp" now requires the use of named parameters. For example, instead of using a route like /users/* to capture all routes starting with "/users", you should use /users/*path. For more details, refer to the migration guide. Attempting to auto-convert...[39m [90m{"context":"LegacyRouteConverter"}[39m
+[12:18:36.481] [33mWARN[39m (12572): [36mUnsupported route path: "/api/v1/*". In previous versions, the symbols ?, *, and + were used to denote optional or repeating path parameters. The latest version of "path-to-regexp" now requires the use of named parameters. For example, instead of using a route like /users/* to capture all routes starting with "/users", you should use /users/*path. For more details, refer to the migration guide. Attempting to auto-convert...[39m [90m{"context":"LegacyRouteConverter"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mAuthController {/api/v1/auth}:[39m [90m{"context":"RoutesResolver"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/auth/login, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/auth/register, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/auth/google, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/auth/logout, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/auth/otp/send, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/auth/otp/verify, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mTelemetryController {/api/v1/telemetry}:[39m [90m{"context":"RoutesResolver"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/telemetry/ingest, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/telemetry/nodes/:nodeId, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/telemetry/dashboard/aggregate, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mInferenceController {/api/v1/inference}:[39m [90m{"context":"RoutesResolver"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/inference/analyze, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/inference/jobs/:reportId, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/inference/chat, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mAnalyticsController {/api/v1/analytics}:[39m [90m{"context":"RoutesResolver"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/analytics/health-overview, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/analytics/overview, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/analytics/environmental-impact, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/analytics/system-status, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mLibraryController {/api/v1/library}:[39m [90m{"context":"RoutesResolver"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/library, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/library/metrics, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/library/:id, GET} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/library, POST} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mMapped {/api/v1/library/:id, PUT} route[39m [90m{"context":"RouterExplorer"}[39m
+[12:18:36.481] [32mINFO[39m (12572): [36mNest application successfully started[39m [90m{"context":"NestApplication"}[39m
+npm : [Assistant Worker] 
+Gemini Chat Failed: 
+ApiError: {"error":{"code":42
+9,"message":"You exceeded 
+your current quota, please 
+check your plan and billing 
+details. For more 
+information on this error, 
+head to: https://ai.google.de
+v/gemini-api/docs/rate-limits
+. To monitor your current 
+usage, head to: 
+https://ai.dev/rate-limit. 
+\n* Quota exceeded for 
+metric: generativelanguage.go
+ogleapis.com/generate_content
+_free_tier_input_token_count,
+ limit: 0, model: 
+gemini-2.0-flash\n* Quota 
+exceeded for metric: generati
+velanguage.googleapis.com/gen
+erate_content_free_tier_reque
+sts, limit: 0, model: 
+gemini-2.0-flash\n* Quota 
+exceeded for metric: generati
+velanguage.googleapis.com/gen
+erate_content_free_tier_reque
+sts, limit: 0, model: 
+gemini-2.0-flash\nPlease 
+retry in 30.41995707s.","stat
+us":"RESOURCE_EXHAUSTED","det
+ails":[{"@type":"type.googlea
+pis.com/google.rpc.Help","lin
+ks":[{"description":"Learn 
+more about Gemini API quotas"
+,"url":"https://ai.google.dev
+/gemini-api/docs/rate-limits"
+}]},{"@type":"type.googleapis
+.com/google.rpc.QuotaFailure"
+,"violations":[{"quotaMetric"
+:"generativelanguage.googleap
+is.com/generate_content_free_
+tier_input_token_count","quot
+aId":"GenerateContentInputTok
+ensPerModelPerMinute-FreeTier
+","quotaDimensions":{"locatio
+n":"global","model":"gemini-2
+.0-flash"}},{"quotaMetric":"g
+enerativelanguage.googleapis.
+com/generate_content_free_tie
+r_requests","quotaId":"Genera
+teRequestsPerMinutePerProject
+PerModel-FreeTier","quotaDime
+nsions":{"location":"global",
+"model":"gemini-2.0-flash"}},
+{"quotaMetric":"generativelan
+guage.googleapis.com/generate
+_content_free_tier_requests",
+"quotaId":"GenerateRequestsPe
+rDayPerProjectPerModel-FreeTi
+er","quotaDimensions":{"locat
+ion":"global","model":"gemini
+-2.0-flash"}}]},{"@type":"typ
+e.googleapis.com/google.rpc.R
+etryInfo","retryDelay":"30s"}
+]}}
+At line:1 char:1
++ npm run start > 
+debug_logs.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: ([Assist  
+  ant Work...elay":"30s"}]   
+ }}:String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+    at throwErrorIfNotOK (C:\
+Users\saide\OneDrive\Document
+s\Desktop\vision-agro-diagnos
+tic\agrovision-backend\node_m
+odules\@google\genai\dist\nod
+e\index.cjs:12445:30)
+    at 
+processTicksAndRejections (no
+de:internal/process/task_queu
+es:95:5)
+    at async C:\Users\saide\O
+neDrive\Documents\Desktop\vis
+ion-agro-diagnostic\agrovisio
+n-backend\node_modules\@googl
+e\genai\dist\node\index.cjs:1
+2148:13
+    at async 
+Models.generateContent (C:\Us
+ers\saide\OneDrive\Documents\
+Desktop\vision-agro-diagnosti
+c\agrovision-backend\node_mod
+ules\@google\genai\dist\node\
+index.cjs:13549:24)
+    at async 
+InferenceProcessor.chat (C:\U
+sers\saide\OneDrive\Documents
+\Desktop\vision-agro-diagnost
+ic\agrovision-backend\src\mod
+ules\inference\inference.proc
+essor.ts:234:30)
+    at async C:\Users\saide\O
+neDrive\Documents\Desktop\vis
+ion-agro-diagnostic\agrovisio
+n-backend\node_modules\@nestj
+s\core\router\router-executio
+n-context.js:46:28
+    at async C:\Users\saide\O
+neDrive\Documents\Desktop\vis
+ion-agro-diagnostic\agrovisio
+n-backend\node_modules\@nestj
+s\core\router\router-proxy.js
+:9:17 {
+  status: 429
+}
+[12:28:29.350] [32mINFO[39m (12572): [36mrequest errored[39m [90m{"req":{"method":"POST","url":"/api/v1/inference/chat","id":1},"res":{"statusCode":500},"responseTime":412}[39m
+    err: {
+      "type": "Error",
+      "message": "failed with status code 500",
+      "stack":
+          Error: failed with status code 500
+              at onResFinished (C:\Users\saide\OneDrive\Documents\Desktop\vision-agro-diagnostic\agrovision-backend\node_modules\pino-http\logger.js:115:39)
+              at ServerResponse.onResponseComplete (C:\Users\saide\OneDrive\Documents\Desktop\vision-agro-diagnostic\agrovision-backend\node_modules\pino-http\logger.js:178:14)
+              at ServerResponse.emit (node:events:530:35)
+              at ServerResponse.emit (node:domain:488:12)
+              at onFinish (node:_http_outgoing:1031:10)
+              at callback (node:internal/streams/writable:757:21)
+              at afterWrite (node:internal/streams/writable:701:5)
+              at afterWriteTick (node:internal/streams/writable:687:10)
+              at processTicksAndRejections (node:internal/process/task_queues:81:21)
+    }

@@ -26,7 +26,7 @@ export class InferenceProcessor {
 
         const { base64Image, mimeType, lat, lon, cropType } = data;
         let finalOutput: any = null;
-        const apiKey = process.env.GEMINI_API_KEY || '';
+        const apiKey = (process.env.GEMINI_API_KEY || '').trim();
 
         // --- VALIDATE API KEY ---
         if (!apiKey) {
@@ -64,7 +64,7 @@ export class InferenceProcessor {
         // --- REAL-TIME MULTIMODAL PLANT DISEASE ANALYSIS ENGINE ---
         try {
             this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 30 });
-            const ai = new GoogleGenAI({ apiKey });
+            const ai = new GoogleGenAI({ apiKey, apiVersion: 'v1beta' });
 
             const promptString = `You are the core reasoning engine of a production agricultural diagnostic platform called AgroVision AI, developed for the project “A Vision-Driven Agro Diagnostic Framework Using Machine Learning.” Your responsibility is to generate accurate real-time crop health diagnostics using outputs from trained machine learning models, image analysis features, and environmental context. 
 
@@ -117,7 +117,7 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
 
             this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 50 });
             const response = await ai.models.generateContent({
-                model: 'gemini-2.0-flash',
+                model: 'gemini-2.5-flash',
                 contents: [
                     {
                         role: 'user',
@@ -197,13 +197,13 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
     }
 
     async chat(message: string, context?: any, history: any[] = []): Promise<any> {
-        const apiKey = process.env.GEMINI_API_KEY;
+        const apiKey = (process.env.GEMINI_API_KEY || '').trim();
         if (!apiKey) {
             console.error("[Assistant Worker] CRITICAL: GEMINI_API_KEY is missing from environment variables.");
             throw new InternalServerErrorException("AI Engine offline: Missing GEMINI_API_KEY on server.");
         }
 
-        const ai = new GoogleGenAI({ apiKey });
+        const ai = new GoogleGenAI({ apiKey, apiVersion: 'v1beta' });
 
         const systemPrompt = `You are Voice Matrix, the intelligent multilingual agricultural assistant integrated into the AgroVision AI platform developed for the project “A Vision-Driven Agro Diagnostic Framework Using Machine Learning.” Your role is to function as a real-time conversational assistant that helps farmers diagnose crop diseases, understand plant health, and receive treatment recommendations using voice interaction, multilingual communication, and image-based crop diagnostics. The assistant must strictly follow the language selected by the user in the language selector (for example English, Telugu, Hindi, Tamil, Kannada, Malayalam, Marathi, or Bengali). Once the user selects a language, that language becomes the active conversation language for the entire session, and every message—including system responses, crop diagnosis explanations, pesticide recommendations, warnings, and error messages—must be generated and spoken only in that selected language. The assistant must never revert to English automatically unless the user explicitly changes the language. The system must support speech-to-text input and text-to-speech output, meaning when the user speaks through the microphone the speech is converted into text using speech recognition configured for the selected language, processed by the assistant, and returned both as text and natural voice output in the same language so the assistant speaks fluently in the user's chosen language.
 
@@ -232,7 +232,7 @@ ${context ? `[CURRENT DIAGNOSTIC/ENVIRONMENT CONTEXT]: ${JSON.stringify(context)
 
         try {
             const response = await ai.models.generateContent({
-                model: 'gemini-2.0-flash',
+                model: 'gemini-2.5-flash',
                 contents: [
                     ...formattedHistory,
                     {
