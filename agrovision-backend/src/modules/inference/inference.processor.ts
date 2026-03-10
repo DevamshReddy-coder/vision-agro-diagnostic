@@ -37,26 +37,31 @@ export class InferenceProcessor {
         }
 
         // --- FETCH REAL-TIME ENVIRONMENTAL DATA (OPEN-METEO) ---
-        let weatherContext = "Real-time weather data unavailable (no coordinates provided).";
-        if (lat && lon) {
-            try {
-                this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 20 });
-                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
-                const weatherRes = await axios.get(weatherUrl);
-                const current = weatherRes.data.current;
-                const daily = weatherRes.data.daily;
-                weatherContext = `LOCAL WEATHER AND FORECAST FOR COORDINATES (${lat}, ${lon}):
+        let weatherContext = "Real-time weather data unavailable.";
+        const effectiveLat = lat || '17.3850'; // Regional Hub Fallback: Hyderabad, India
+        const effectiveLon = lon || '78.4867';
+        let rawWeatherData: any = null;
+
+        try {
+            this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 20 });
+            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${effectiveLat}&longitude=${effectiveLon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+            const weatherRes = await axios.get(weatherUrl);
+            const current = weatherRes.data.current;
+            const daily = weatherRes.data.daily;
+            rawWeatherData = current;
+
+            weatherContext = `LOCAL REAL-TIME WEATHER AND FORECAST (Location: ${lat && lon ? 'User Precise Coordinates' : 'Agro-Regional Hub Fallback'}):
+- Region: ${effectiveLat}, ${effectiveLon}
 - Current Conditions: Temperature ${current.temperature_2m}°C, Humidity ${current.relative_humidity_2m}%, Precipitation ${current.precipitation}mm
 - Next 3 Days Forecast: 
   Day 1: ${daily.temperature_2m_max[1]}°C max, ${daily.precipitation_sum[1]}mm rain
   Day 2: ${daily.temperature_2m_max[2]}°C max, ${daily.precipitation_sum[2]}mm rain
   Day 3: ${daily.temperature_2m_max[3]}°C max, ${daily.precipitation_sum[3]}mm rain
 `;
-                console.log(`[Diagnostic Lab] Live Weather Integrated for Neural Inference: ${current.temperature_2m}°C, ${current.relative_humidity_2m}% HR`);
-            } catch (err) {
-                console.error("[AI Worker] Failed to fetch weather data from Open-Meteo", err.message);
-                weatherContext = "Real-time weather data unavailable (fetch failed).";
-            }
+            console.log(`[Diagnostic Lab] Live Weather Integrated: ${current.temperature_2m}°C, ${current.relative_humidity_2m}% HR`);
+        } catch (err) {
+            console.error("[AI Worker] Failed to fetch weather data", err.message);
+            weatherContext = "Real-time weather data currently unavailable due to network timeout.";
         }
 
         const cropHint = cropType && cropType !== "Potato" && cropType !== "None" ? `The user suspects or identified this plant as: ${cropType}. Use this as a strong hint, but verify it via the image characteristics.` : `The crop type was not provided. You MUST identify the crop species accurately.`;
@@ -111,7 +116,13 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
     "spreadProbability": "High/Medium/Low based on weather",
     "yieldImpact": "Estimated yield loss %",
     "environmentalFactor": "Explanation of how the current weather affects this disease right now.",
-    "next7DayForecast": "What to look out for based on next 3 day rain/temp forecast."
+    "next7DayForecast": "What to look out for based on next 3 day rain/temp forecast.",
+    "liveMetrics": {
+       "temp": "current temp",
+       "humidity": "current humidity",
+       "precipitation": "current rain",
+       "isRiskHigh": "boolean"
+    }
   }
 }`;
 
@@ -148,6 +159,16 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
 
             if (!finalOutput || !finalOutput.disease) {
                 throw new Error("Invalid formulation of AI response.");
+            }
+
+            // Inject raw weather data into final JSON if missing or to ensure accuracy
+            if (rawWeatherData && finalOutput.insights) {
+                finalOutput.insights.liveMetrics = {
+                    temp: rawWeatherData.temperature_2m,
+                    humidity: rawWeatherData.relative_humidity_2m,
+                    precipitation: rawWeatherData.precipitation,
+                    isRiskHigh: finalOutput.riskLevel === 'High' || finalOutput.riskLevel === 'Critical'
+                };
             }
 
             if (finalOutput.cropConfidence < 0.70) {

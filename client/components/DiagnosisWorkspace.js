@@ -183,10 +183,10 @@ export default function DiagnosisWorkspace() {
       navigator.geolocation.getCurrentPosition(
         (position) => executeDiagnosis(position.coords.latitude, position.coords.longitude),
         (error) => {
-          console.log("Geolocation denied, proceeding instantly without weather context.");
+          console.log("Geolocation denied or timed out, using regional fallback.");
           executeDiagnosis();
         },
-        { enableHighAccuracy: false, timeout: 2500, maximumAge: Infinity } // Make location fetch practically instant using cache
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 } 
       );
     } else {
       executeDiagnosis();
@@ -528,10 +528,39 @@ export default function DiagnosisWorkspace() {
                                 <p className="text-xs font-bold text-amber-800 leading-relaxed"><span className="font-black uppercase tracking-widest">Notice:</span> {result.message}</p>
                             </div>
                         )}
+                        {result.insights?.liveMetrics && (
+                            <div className="mt-4 grid grid-cols-3 gap-3">
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1">Temperature</p>
+                                    <p className="text-sm font-black text-slate-900">{result.insights.liveMetrics.temp}°C</p>
+                                </div>
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1">Humidity</p>
+                                    <p className="text-sm font-black text-slate-900">{result.insights.liveMetrics.humidity}%</p>
+                                </div>
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1">Precipitation</p>
+                                    <p className="text-sm font-black text-slate-900">{result.insights.liveMetrics.precipitation}mm</p>
+                                </div>
+                            </div>
+                        )}
+                        
                         {result.insights?.environmentalFactor && (
-                            <div className="mt-2 p-4 bg-slate-900 rounded-2xl text-white">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Environmental Factor</p>
-                                <p className="text-xs font-bold text-white leading-relaxed">{result.insights.environmentalFactor}</p>
+                            <div className="mt-3 p-5 bg-slate-900 rounded-[2rem] text-white shadow-2xl relative overflow-hidden group/env">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover/env:scale-150 transition-transform duration-700"></div>
+                                <div className="relative z-10">
+                                  <div className="flex items-center gap-2 mb-3">
+                                     <Activity size={12} className="text-primary animate-pulse" />
+                                     <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">Environmental Intelligence</p>
+                                  </div>
+                                  <p className="text-xs font-bold text-white leading-relaxed">{result.insights.environmentalFactor}</p>
+                                  {result.insights?.next7DayForecast && (
+                                     <div className="mt-4 pt-4 border-t border-white/10">
+                                        <p className="text-[8px] font-black uppercase tracking-widest text-primary mb-1">Neural Forecast</p>
+                                        <p className="text-[10px] text-slate-300 italic font-medium">{result.insights.next7DayForecast}</p>
+                                     </div>
+                                  )}
+                                </div>
                             </div>
                         )}
                       </div>
