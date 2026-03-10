@@ -31,7 +31,7 @@ export default function NotificationCenter() {
     // 2. Listen for critical alerts from the AI / Environment Engine
     socketRef.current.on('alert_critical', (data) => {
       addNotification({
-        id: crypto.randomUUID(),
+        id: `crit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: 'CRITICAL',
         title: 'High-Risk Geo-Cluster Detected',
         message: data.payload?.message || 'Regional outbreak probability exceeded safety thresholds.',
@@ -44,7 +44,7 @@ export default function NotificationCenter() {
     socketRef.current.on('inference_progress', (data) => {
       if (data.status === 'COMPLETED') {
         addNotification({
-          id: crypto.randomUUID(),
+          id: `succ-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           type: 'SUCCESS',
           title: 'Neural Analysis Complete',
           message: `Inference finished. Classified as: ${data.result?.name || 'Unknown'}`,

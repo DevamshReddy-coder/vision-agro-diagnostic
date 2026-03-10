@@ -105,7 +105,9 @@ export default function HowItWorks() {
                     
                     <div className="w-32 h-32 bg-white rounded-[3rem] flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.04)] group-hover:shadow-[0_40px_80px_rgba(16,185,129,0.12)] group-hover:scale-105 transition-all duration-700 border border-slate-50 group-hover:border-emerald-500/30 relative z-10">
                       <div className="relative z-10 group-hover:scale-110 transition-transform duration-700 text-slate-400 group-hover:text-emerald-500">
-                        {React.cloneElement(step.icon, { size: 42, strokeWidth: 1 })}
+                        {step.icon && React.isValidElement(step.icon) 
+                          ? React.cloneElement(step.icon, { size: 42, strokeWidth: 1 })
+                          : null}
                       </div>
                     </div>
                     

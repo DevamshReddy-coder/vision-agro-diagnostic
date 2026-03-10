@@ -193,19 +193,19 @@ export default function AgriBot({ context }) {
       }
       
       if (bestVoice) {
-        console.log(`[Voice Matrix] Selecting voice: ${bestVoice.name} for ${selectedLang}`);
         utterance.voice = bestVoice;
         utterance.lang = bestVoice.lang;
       } else {
-        console.warn(`[Voice Matrix] No native voice found for ${selectedLang}, falling back to default engine.`);
         utterance.lang = selectedLang;
       }
 
-      utterance.rate = 0.95; // Slightly slower for better clarity in rural advisory
+      utterance.rate = 0.95; 
       utterance.pitch = 1.0; 
       utterance.volume = 1.0;
       
-      synthRef.current.speak(utterance);
+      if (synthRef.current) {
+        synthRef.current.speak(utterance);
+      }
     };
 
     // Prime the voice engine on user gesture to bypass browser restrictions after async awaits

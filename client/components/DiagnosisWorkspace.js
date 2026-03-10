@@ -47,7 +47,6 @@ export default function DiagnosisWorkspace() {
        if (data.status === 'PROCESSING') {
           setInferenceProgress(data.progress || 10);
        } else if (data.status === 'COMPLETED') {
-          if (window.fallbackTimeout) clearTimeout(window.fallbackTimeout);
           // Finish loading and show data
           setResult({
             disease: data.result.disease || "Unknown Anomaly",
@@ -66,7 +65,6 @@ export default function DiagnosisWorkspace() {
           setInferenceProgress(null);
           // fetchHistory();
        } else if (data.status === 'FAILED') {
-          if (window.fallbackTimeout) clearTimeout(window.fallbackTimeout);
           setResult({
             disease: "Analysis Failed: " + (data.error || "Unknown Error"),
             crop: "Unknown",
@@ -168,7 +166,6 @@ SYSTEM AUTH: VALIDATED
         setInferenceProgress(95); 
         
         // 2. Process synchronous result directly
-        if (window.fallbackTimeout) clearTimeout(window.fallbackTimeout);
         
         if (res.data.status === 'COMPLETED' && res.data.fullResult) {
             const r = res.data.fullResult;
