@@ -11,7 +11,7 @@ export class InferenceService {
         @InjectRepository(DiagnosticReport) private readonly reportRepo: Repository<DiagnosticReport>,
     ) { }
 
-    async submitAnalysisJob(userId: string, tempImageUrl: string, base64Image?: string, mimeType?: string, lat?: string, lon?: string, cropType?: string): Promise<DiagnosticReport> {
+    async submitAnalysisJob(userId: string, tempImageUrl: string, base64Image?: string, mimeType?: string, lat?: string, lon?: string, cropType?: string, lang?: string): Promise<DiagnosticReport> {
         try {
             // 1. Create Placeholder DB Record (Status: QUEUED)
             const newReport = this.reportRepo.create({
@@ -33,7 +33,8 @@ export class InferenceService {
                 mimeType,
                 lat,
                 lon,
-                cropType
+                cropType,
+                lang
             });
 
             // Fetch the updated report with the AI results

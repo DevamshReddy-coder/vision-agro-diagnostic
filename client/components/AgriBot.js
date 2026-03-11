@@ -14,8 +14,12 @@ const SUPPORTED_LANGUAGES = [
   { code: 'bn-IN', name: 'Bengali (বাংলা)' },
 ];
 
-export default function AgriBot({ context }) {
+export default function AgriBot({ context, selectedLang: propLang, onLangChange }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [internalLang, setInternalLang] = useState('en-US');
+  
+  const selectedLang = propLang || internalLang;
+  const setSelectedLang = onLangChange || setInternalLang;
   const INTRO_MAP = {
       'te-IN': 'నమస్కారం! నేను మీ ఆగ్రోవిజన్ AI సహాయకుడిని. మీ పంటలు, వ్యాధులు किंवा రోగనిర్ధారణ నివేదిక గురించి ఏదైనా అడగండి.',
       'hi-IN': 'नमस्ते! मैं आपका AgroVision AI सहायक हूँ। मुझे अपनी फसलों, बीमारियों या नैदानिक रिपोर्ट के बारे में कुछ भी पूछें।',
@@ -32,7 +36,6 @@ export default function AgriBot({ context }) {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedLang, setSelectedLang] = useState('te-IN');
 
   const recognitionRef = useRef(null);
   const synthRef = useRef(typeof window !== 'undefined' ? window.speechSynthesis : null);
@@ -335,6 +338,7 @@ export default function AgriBot({ context }) {
           const formData = new FormData();
           formData.append('image', file);
           formData.append('cropType', 'Auto-Detect');
+          formData.append('lang', selectedLang);
           
           const token = localStorage.getItem('token');
           const analyzeRes = await axios.post(`${baseUrl}/inference/analyze`, formData, {

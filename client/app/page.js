@@ -35,6 +35,7 @@ const Navbar = dynamic(() => import('../components/Navbar'), { ssr: false });
 export default function Home() {
   const [authScreen, setAuthScreen] = useState(null); // 'login' | 'register' | null
   const [heroWeather, setHeroWeather] = useState({ temp: 24, humidity: 68, wind: 14, condition: 'Partly Cloudy' });
+  const [selectedLang, setSelectedLang] = useState('en-US');
 
   useEffect(() => {
     // Fetch live weather for the hero visual hub
@@ -388,7 +389,10 @@ export default function Home() {
       </section>
 
       <HowItWorks />
-      <DiagnosisWorkspace />
+      <DiagnosisWorkspace 
+        selectedLang={selectedLang} 
+        onLangChange={setSelectedLang}
+      />
       <AnalyticsDashboard />
       <KnowledgeHub />
 

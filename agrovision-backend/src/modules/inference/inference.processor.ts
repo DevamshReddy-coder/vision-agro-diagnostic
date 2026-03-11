@@ -14,7 +14,7 @@ export class InferenceProcessor {
         private readonly gateway: TelemetryGateway,
     ) { }
 
-    async process(data: { reportId: string, imageUrl?: string, base64Image?: string, mimeType?: string, lat?: string, lon?: string, cropType?: string }): Promise<any> {
+    async process(data: { reportId: string, imageUrl?: string, base64Image?: string, mimeType?: string, lat?: string, lon?: string, cropType?: string, lang?: string }): Promise<any> {
         const reportId = data.reportId;
         console.log(`[AI Worker] Starting immediate inference for Report ID: ${reportId}`);
 
@@ -24,7 +24,7 @@ export class InferenceProcessor {
         // Emit real-time status update to frontend
         this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 10 });
 
-        const { base64Image, mimeType, lat, lon, cropType } = data;
+        const { base64Image, mimeType, lat, lon, cropType, lang } = data;
         let finalOutput: any = null;
         const apiKey = (process.env.GEMINI_API_KEY || '').trim();
 
@@ -84,6 +84,10 @@ Next, incorporate environmental intelligence by evaluating available weather and
 After confirming the disease and severity, generate crop-specific treatment recommendations including chemical control options such as pesticide name, active ingredient, dosage, and spray interval, along with organic or integrated pest management methods such as neem oil sprays, biological control agents, resistant crop varieties, crop rotation, and improved irrigation practices. Treatment recommendations must always match the detected crop and disease and must never repeat generic instructions for unrelated crops. 
 
 Finally, estimate the agricultural impact by predicting the potential yield loss percentage if the disease is left untreated and classify the overall threat level as low, medium, high, or critical. If the system does not have sufficient evidence for disease identification, it must explicitly state that the diagnosis is uncertain rather than generating misleading analysis. The ultimate goal of the system is to deliver accurate, crop-specific, evidence-based plant disease diagnostics that can be reliably used in a real-time precision agriculture decision support platform.
+
+[CRITICAL: LANGUAGE ENFORCEMENT]
+You MUST provide all natural language fields (disease name, xaiInsight, recommendations, etc.) ONLY in ${lang || 'English'}.
+Every single word of your output MUST be in this language. Do not use English unless the user requested it.
 
 ${weatherContext}
 ${cropHint}

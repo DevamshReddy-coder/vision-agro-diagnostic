@@ -10,7 +10,7 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import AgriBot from './AgriBot';
 
-export default function DiagnosisWorkspace() {
+export default function DiagnosisWorkspace({ selectedLang = 'en-US', onLangChange }) {
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -147,6 +147,7 @@ SYSTEM AUTH: VALIDATED
     const formData = new FormData();
     formData.append('image', image);
     formData.append('cropType', cropType);
+    formData.append('lang', selectedLang);
 
     const executeDiagnosis = async (lat = null, lon = null) => {
       if (lat && lon) {
@@ -702,7 +703,7 @@ SYSTEM AUTH: VALIDATED
 
         </div>
       </div>
-      <AgriBot context={result} />
+      <AgriBot context={result} selectedLang={selectedLang} onLangChange={onLangChange} />
     </section>
   );
 }

@@ -53,6 +53,7 @@ export class InferenceController {
         const lat = body.lat;
         const lon = body.lon;
         const cropType = body.cropType;
+        const lang = body.lang;
 
         console.log(`[Diagnostic Lab] Received specimen: ${file.originalname} (${(file.size / 1024).toFixed(0)}KB, ${mimeType}) from user ${user?.sub || 'anonymous'}`);
         if (lat && lon) console.log(`[Diagnostic Lab] Live Geolocation captured: Lat ${lat}, Lon ${lon}`);
@@ -62,7 +63,7 @@ export class InferenceController {
         const mockS3Url = `https://s3.agrovision.ai/specimens/${userId}/${Date.now()}-${file.originalname}`;
 
         // 5. Queue the job
-        const report = await this.inferenceService.submitAnalysisJob(userId, mockS3Url, base64Image, mimeType, lat, lon, cropType);
+        const report = await this.inferenceService.submitAnalysisJob(userId, mockS3Url, base64Image, mimeType, lat, lon, cropType, lang);
 
         return {
             message: 'Specimen accepted. Neural analysis pipeline completed.',

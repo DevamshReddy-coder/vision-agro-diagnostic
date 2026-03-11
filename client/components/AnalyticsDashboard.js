@@ -40,7 +40,14 @@ export default function AnalyticsDashboard() {
     };
 
     fetchStats();
-    return () => clearInterval(interval);
+    
+    // Refresh stats every 60 seconds for real-time monitoring
+    const statsInterval = setInterval(fetchStats, 60000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(statsInterval);
+    };
   }, []);
 
   const COLORS = ['#10b981', '#34d399', '#059669', '#064e3b', '#fbbf24'];
