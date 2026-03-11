@@ -70,11 +70,23 @@ export default function Home() {
         try {
            const geo = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
            const gData = await geo.json();
-           setHeroLocation(`${gData.city || 'Regional Zone'}, INDIA`);
+           
+           const city = gData.city || gData.locality || 'Regional Zone';
+           const country = gData.countryName;
+           
+           if (country === "India") {
+              setHeroLocation(`${city}, IN`);
+           } else {
+              setHeroLocation(`${city}, ${country} (Global Node)`);
+           }
         } catch (e) {}
       }, () => {
         fetchHeroWeather();
-        setHeroLocation('Hyderabad, INDIA');
+        setHeroLocation('Hyderabad, IN');
+      }, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
       });
     } else {
       fetchHeroWeather();

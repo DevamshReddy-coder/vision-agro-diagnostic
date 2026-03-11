@@ -58,22 +58,38 @@ export default function FarmerProfile({ isOpen, onClose }) {
 
   const detectLocation = () => {
     if (typeof window !== "undefined" && navigator.geolocation) {
+      // Use High-Accuracy GPS Protocol for Production
       navigator.geolocation.getCurrentPosition(async (position) => {
         const { latitude, longitude } = position.coords;
         await fetchWeather(latitude, longitude);
         
         try {
-           // Reverse Geocoding for localized India context
+           // Reverse Geocoding with freshness protocol
            const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
            const geoData = await geoRes.json();
-           setLocationName(`${geoData.city || 'Local Area'}, ${geoData.principalSubdivision || 'Zone'}, ${geoData.countryName}`);
+           
+           const city = geoData.city || geoData.locality || 'Unknown Area';
+           const state = geoData.principalSubdivision || 'Regional Zone';
+           const country = geoData.countryName;
+           
+           // Production-level India-Mode Verification
+           if (country === "India") {
+              setLocationName(`${city}, ${state}, IN`);
+           } else {
+              // Flag as External Node but maintain connectivity
+              setLocationName(`${city}, ${country} (Global Node)`);
+           }
         } catch (e) { 
-           setLocationName("India Digital Territory"); 
+           setLocationName("AgroVision India Digital Territory"); 
         }
       }, () => {
-        // Fallback to high-traffic India center (Hyderabad) if denied
+        // Fallback to high-traffic India center (Hyderabad) if denied or timed out
         fetchWeather(17.3850, 78.4867);
-        setLocationName("Hyderabad, Telangana, India (Fallback)");
+        setLocationName("Hyderabad, Telangana, IN (Fallback)");
+      }, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
       });
     }
   };
@@ -232,7 +248,13 @@ export default function FarmerProfile({ isOpen, onClose }) {
                     {/* TOP SUMMARY STRIP (Tab Independent) */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                        <StatItem icon={Sprout} label="Cultivation Area" value={profile?.farmSize || "N/A"} sub="Acres under sync" />
-                       <StatItem icon={MapPin} label="Detected Zone" value={locationName.split(',')[0]} sub={locationName.split(',').slice(1).join(',')} />
+                       <StatItem 
+                          icon={MapPin} 
+                          label="Detected Zone" 
+                          value={locationName.split(',')[0]} 
+                          sub={locationName.split(',').slice(1).join(',')} 
+                          color={locationName.includes('(Global Node)') ? 'text-amber-500' : 'text-emerald-500'}
+                       />
                        <StatItem icon={Zap} label="Diagnostic Fleet" value={history?.length || 0} sub="Neural Scans Performed" />
                        <WeatherItem />
                     </div>
