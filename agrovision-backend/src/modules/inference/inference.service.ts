@@ -57,4 +57,11 @@ export class InferenceService {
     async chatWithAssistant(message: string, history: any[] = [], context?: any) {
         return this.inferenceProcessor.chat(message, context, history);
     }
+
+    async getUserReports(userId: string): Promise<DiagnosticReport[]> {
+        return this.reportRepo.find({
+            where: { userId },
+            order: { createdAt: 'DESC' },
+        });
+    }
 }

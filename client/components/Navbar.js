@@ -4,7 +4,7 @@ import { Leaf, Menu, X, User, LogOut, LayoutDashboard, History, Settings, Extern
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationCenter from './NotificationCenter';
 
-export default function Navbar({ onLoginClick, onBotToggle }) {
+export default function Navbar({ onLoginClick, onBotToggle, onProfileOpen }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -164,6 +164,16 @@ export default function Navbar({ onLoginClick, onBotToggle }) {
                       </div>
                     </div>
                     <div className="p-1.5 space-y-1">
+                      <button 
+                        className="w-full flex items-center justify-between px-4 py-3 text-[10px] font-black text-slate-600 hover:bg-slate-50 hover:text-primary rounded-xl transition-all uppercase tracking-widest group"
+                        onClick={() => {
+                           setIsUserDropdownOpen(false);
+                           onProfileOpen();
+                        }}
+                      >
+                        <span className="flex items-center gap-3"><LayoutDashboard size={16} /> My Dashboard</span>
+                        <ChevronDown size={14} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all" />
+                      </button>
                       <button className="w-full flex items-center justify-between px-4 py-3 text-[10px] font-black text-slate-600 hover:bg-slate-50 hover:text-primary rounded-xl transition-all uppercase tracking-widest group">
                         <span className="flex items-center gap-3"><Settings size={16} /> Preferences</span>
                         <ChevronDown size={14} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all" />

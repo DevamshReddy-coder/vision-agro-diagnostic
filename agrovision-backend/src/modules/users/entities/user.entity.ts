@@ -18,6 +18,24 @@ export class User {
     @Column({ default: 'Farmer' }) // 'Farmer', 'Agronomist', 'Admin'
     role: string;
 
+    @Column({ nullable: true })
+    farmLocation: string;
+
+    @Column({ nullable: true })
+    farmSize: string;
+
+    @Column({ type: 'simple-json', nullable: true })
+    cropsGrown: string[];
+
+    @Column({ nullable: true })
+    region: string;
+
+    @Column({ default: 'en-US' })
+    preferredLanguage: string;
+
+    @Column({ nullable: true })
+    phone: string;
+
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 

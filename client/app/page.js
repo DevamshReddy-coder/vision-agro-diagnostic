@@ -33,6 +33,7 @@ const AuthModal = dynamic(() => import('../components/AuthModal'), { ssr: false 
 const HowItWorks = dynamic(() => import('../components/HowItWorks'), { ssr: false });
 const Navbar = dynamic(() => import('../components/Navbar'), { ssr: false });
 const AgriBot = dynamic(() => import('../components/AgriBot'), { ssr: false });
+const FarmerProfile = dynamic(() => import('../components/FarmerProfile'), { ssr: false });
 
 export default function Home() {
   const [authScreen, setAuthScreen] = useState(null); // 'login' | 'register' | null
@@ -40,6 +41,7 @@ export default function Home() {
   const [selectedLang, setSelectedLang] = useState('en-US');
   const [isBotOpen, setIsBotOpen] = useState(false);
   const [botContext, setBotContext] = useState(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
     // Fetch live weather for the hero visual hub
@@ -68,7 +70,11 @@ export default function Home() {
   return (
     <div className="min-h-screen selection:bg-primary selection:text-white bg-white">
       <AuthModal isOpen={!!authScreen} initialScreen={authScreen || 'login'} onClose={() => setAuthScreen(null)} />
-      <Navbar onLoginClick={(type) => setAuthScreen(type)} onBotToggle={() => setIsBotOpen(!isBotOpen)} />
+      <Navbar 
+        onLoginClick={(type) => setAuthScreen(type)} 
+        onBotToggle={() => setIsBotOpen(!isBotOpen)} 
+        onProfileOpen={() => setIsProfileOpen(true)}
+      />
 
       {/* Hero Section */}
       <section className="relative pt-12 lg:pt-16 pb-24 lg:pb-32 overflow-hidden bg-white">
@@ -479,6 +485,10 @@ export default function Home() {
         onLangChange={setSelectedLang}
         isOpen={isBotOpen}
         onOpenChange={setIsBotOpen}
+      />
+      <FarmerProfile 
+        isOpen={isProfileOpen} 
+        onClose={() => setIsProfileOpen(false)} 
       />
     </div>
   );

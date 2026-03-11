@@ -14,6 +14,10 @@ export class UsersService {
         return this.usersRepository.findOne({ where: { email } });
     }
 
+    async findById(id: string): Promise<User | null> {
+        return this.usersRepository.findOne({ where: { id } });
+    }
+
     async create(userData: Partial<User>): Promise<User> {
         const existing = await this.findByEmail(userData.email);
         if (existing) {
@@ -22,5 +26,10 @@ export class UsersService {
 
         const newUser = this.usersRepository.create(userData);
         return this.usersRepository.save(newUser);
+    }
+
+    async updateProfile(userId: string, updateData: Partial<User>): Promise<User> {
+        await this.usersRepository.update(userId, updateData);
+        return this.findById(userId);
     }
 }

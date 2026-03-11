@@ -74,6 +74,15 @@ export class InferenceController {
         };
     }
 
+    @Get('history')
+    @ApiOperation({ summary: 'Get complete agricultural history for the authenticated farmer' })
+    async getMyReports(@CurrentUser() user: any) {
+        if (!user || !user.sub) {
+            throw new BadRequestException('Session required to fetch history.');
+        }
+        return this.inferenceService.getUserReports(user.sub);
+    }
+
     @Get('jobs/:reportId')
     @ApiOperation({ summary: 'Poll inference status if WebSockets are unavailable.' })
     async checkJobStatus(@Param('reportId') reportId: string) {
