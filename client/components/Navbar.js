@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Leaf, Menu, X, User, LogOut, LayoutDashboard, History, Settings, ExternalLink, ChevronDown, Activity, ShieldCheck, Bot } from 'lucide-react';
+import { Leaf, Menu, X, User, LogOut, LayoutDashboard, History, Settings, ExternalLink, ChevronDown, Activity, ShieldCheck, Bot, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationCenter from './NotificationCenter';
 
@@ -10,6 +10,7 @@ export default function Navbar({ onLoginClick, onBotToggle, onProfileOpen }) {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
   const [user, setUser] = useState(null);
+  const [indiaRegion, setIndiaRegion] = useState('INDIA NODE');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,6 +34,17 @@ export default function Navbar({ onLoginClick, onBotToggle, onProfileOpen }) {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
+    }
+
+    // Geolocation Node Detection
+    if (navigator.geolocation) {
+       navigator.geolocation.getCurrentPosition(async (pos) => {
+          try {
+             const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&localityLanguage=en`);
+             const data = await res.json();
+             setIndiaRegion(`${data.city || 'LOCAL'}, IN`);
+          } catch(e) {}
+       });
     }
 
     return () => window.removeEventListener('scroll', handleScroll);
@@ -78,8 +90,8 @@ export default function Navbar({ onLoginClick, onBotToggle, onProfileOpen }) {
                 />
               )}
             </span>
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1 whitespace-nowrap">
-              Precision Agricultural Intelligence
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1 whitespace-nowrap flex items-center gap-2">
+              <MapPin size={8} className="text-primary" strokeWidth={3} /> {indiaRegion} // Precision Intelligence
             </span>
           </div>
         </div>

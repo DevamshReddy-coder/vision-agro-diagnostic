@@ -18,6 +18,7 @@ export default function FarmerProfile({ isOpen, onClose }) {
   const [error, setError] = useState(null);
   const [editData, setEditData] = useState({});
   const [weather, setWeather] = useState({ temp: '--', condition: 'Connecting...', humidity: '--', wind: '--' });
+  const [locationName, setLocationName] = useState('Detecting Territory...');
 
   useEffect(() => {
     if (isOpen) {
@@ -45,10 +46,8 @@ export default function FarmerProfile({ isOpen, onClose }) {
       setEditData(profileRes.data);
       setHistory(historyRes.data);
       
-      // Personalized Weather Fetch based on region or coords
-      if (profileRes.data.farmLocation) {
-          fetchWeather(profileRes.data.farmLocation);
-      }
+      // Auto-detect production-level location for India-specific zones
+      detectLocation();
     } catch (err) {
       setError("Session synchronization failed. Please re-authenticate.");
       console.error(err);
@@ -57,10 +56,31 @@ export default function FarmerProfile({ isOpen, onClose }) {
     }
   };
 
-  const fetchWeather = async (location) => {
+  const detectLocation = () => {
+    if (typeof window !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const { latitude, longitude } = position.coords;
+        await fetchWeather(latitude, longitude);
+        
+        try {
+           // Reverse Geocoding for localized India context
+           const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+           const geoData = await geoRes.json();
+           setLocationName(`${geoData.city || 'Local Area'}, ${geoData.principalSubdivision || 'Zone'}, ${geoData.countryName}`);
+        } catch (e) { 
+           setLocationName("India Digital Territory"); 
+        }
+      }, () => {
+        // Fallback to high-traffic India center (Hyderabad) if denied
+        fetchWeather(17.3850, 78.4867);
+        setLocationName("Hyderabad, Telangana, India (Fallback)");
+      });
+    }
+  };
+
+  const fetchWeather = async (lat, lon) => {
     try {
-        // Simple search for coords from location string or use defaults
-        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=17.3850&longitude=78.4867&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto');
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`);
         const data = await res.json();
         if (data.current) {
           const codeMap = { 0: 'Clear Sky', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast', 45: 'Foggy', 51: 'Drizzle', 61: 'Rainy' };
@@ -157,6 +177,13 @@ export default function FarmerProfile({ isOpen, onClose }) {
                   desc="All previous scans"
                 />
                 <NavButton 
+                  active={activeTab === 'alerts'} 
+                  onClick={() => setActiveTab('alerts')} 
+                  icon={Bell} 
+                  label="Risk Notification" 
+                  desc="Outbreak Warnings"
+                />
+                <NavButton 
                   active={activeTab === 'settings'} 
                   onClick={() => setActiveTab('settings')} 
                   icon={Settings} 
@@ -205,7 +232,7 @@ export default function FarmerProfile({ isOpen, onClose }) {
                     {/* TOP SUMMARY STRIP (Tab Independent) */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                        <StatItem icon={Sprout} label="Cultivation Area" value={profile?.farmSize || "N/A"} sub="Acres under sync" />
-                       <StatItem icon={MapPin} label="Farm Region" value={profile?.region || "Local"} sub="Regional Territory" />
+                       <StatItem icon={MapPin} label="Detected Zone" value={locationName.split(',')[0]} sub={locationName.split(',').slice(1).join(',')} />
                        <StatItem icon={Zap} label="Diagnostic Fleet" value={history?.length || 0} sub="Neural Scans Performed" />
                        <WeatherItem />
                     </div>
@@ -223,6 +250,20 @@ export default function FarmerProfile({ isOpen, onClose }) {
                             
                             <div className="grid lg:grid-cols-3 gap-8">
                                <div className="lg:col-span-2 space-y-8">
+                                  {/* AI Alert Ticker */}
+                                  <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-[2rem] flex items-center justify-between">
+                                     <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-red-500 text-white rounded-xl flex items-center justify-center animate-pulse">
+                                           <AlertCircle size={20} />
+                                        </div>
+                                        <div>
+                                           <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">High Risk Advisory</p>
+                                           <p className="text-xs font-black text-slate-900 uppercase">Extreme Humidity Detected // Late Blight Outbreak Predicted</p>
+                                        </div>
+                                     </div>
+                                     <button className="px-6 py-2 bg-red-500 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all">Action Plan</button>
+                                  </div>
+
                                   {/* Activity Chart Placeholder / Health Trend */}
                                   <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-premium relative overflow-hidden h-[340px]">
                                      <div className="absolute top-0 right-0 p-8 flex gap-2">
@@ -273,6 +314,36 @@ export default function FarmerProfile({ isOpen, onClose }) {
                                </div>
 
                                <div className="space-y-8">
+                                  {/* Soil Sensor Matrix */}
+                                  <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm space-y-8">
+                                     <div className="flex items-center justify-between px-2">
+                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ground Unit Stream</h4>
+                                        <div className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[8px] font-black uppercase tracking-widest">Active Sensor</div>
+                                     </div>
+                                     <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-5 bg-slate-50 rounded-[2rem] border border-slate-100">
+                                           <Droplets size={14} className="text-blue-500 mb-3" />
+                                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Moisture</p>
+                                           <p className="text-xl font-black text-slate-900 leading-none tracking-tighter">42%</p>
+                                        </div>
+                                        <div className="p-5 bg-slate-50 rounded-[2rem] border border-slate-100">
+                                           <ThermometerSun size={14} className="text-amber-500 mb-3" />
+                                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Soil Temp</p>
+                                           <p className="text-xl font-black text-slate-900 leading-none tracking-tighter">22°C</p>
+                                        </div>
+                                     </div>
+                                     <div className="p-6 bg-slate-900 rounded-[2rem] text-white">
+                                        <div className="flex items-center gap-3 mb-3">
+                                           <HardDrive size={14} className="text-emerald-400" />
+                                           <span className="text-[10px] font-black uppercase tracking-widest">Condition Index</span>
+                                        </div>
+                                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                           <div className="h-full bg-emerald-500 w-[84%]"></div>
+                                        </div>
+                                        <p className="text-[8px] font-medium text-slate-400 uppercase tracking-[0.2em] mt-3">Nitrogen Balance: Extreme Optimal</p>
+                                     </div>
+                                  </div>
+
                                   {/* Farm Attributes */}
                                   <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm space-y-6">
                                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Operational Context</h4>
@@ -283,19 +354,50 @@ export default function FarmerProfile({ isOpen, onClose }) {
                                         <AttributeBox icon={Calendar} label="Member Since" value={new Date(profile?.createdAt).toLocaleDateString()} />
                                      </div>
                                   </div>
-
-                                  {/* Crops Managed */}
-                                  <div className="bg-emerald-50 p-8 rounded-[3rem] border border-emerald-100/50">
-                                     <h4 className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest mb-6 text-center">Managed Cultivar Array</h4>
-                                     <div className="flex flex-wrap justify-center gap-2">
-                                        {(profile?.cropsGrown || ['Potato', 'Tomato', 'Bell Pepper']).map(crop => (
-                                          <div key={crop} className="px-5 py-2.5 bg-white text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-emerald-100 shadow-sm">
-                                             {crop}
-                                          </div>
-                                        ))}
-                                     </div>
-                                  </div>
                                </div>
+                            </div>
+                         </motion.div>
+                       )}
+
+                       {activeTab === 'alerts' && (
+                         <motion.div 
+                           key="alerts"
+                           initial={{ opacity: 0, x: 20 }}
+                           animate={{ opacity: 1, x: 0 }}
+                           exit={{ opacity: 0, x: -20 }}
+                           className="space-y-10"
+                         >
+                            <SectionHeader title="Risk Notification Engine" desc="Mission-critical updates for your cultivated array" />
+                            
+                            <div className="grid md:grid-cols-2 gap-8">
+                               <AlertCard 
+                                 type="CRITICAL" 
+                                 title="Weather Correlation Alert" 
+                                 msg="High humidity + Lowering temps detected. Predicted risk for Potato Late Blight is 92% in your specific sector." 
+                                 time="12 mins ago"
+                                 action="View Treatment Protocol"
+                               />
+                               <AlertCard 
+                                 type="SYSTEM" 
+                                 title="Neural Hardware Sync" 
+                                 msg="Ground sensor unit #842 synchronized successfully. Satellite imagery confirms biomass increase in East Quadrant." 
+                                 time="1 hour ago"
+                                 action="Map Data"
+                               />
+                               <AlertCard 
+                                 type="ADVISORY" 
+                                 title="Nutrient Advisory" 
+                                 msg="Soil Nitrogen levels dropping slightly below target. Recommended top-dressing with organic compost before next watering cycle." 
+                                 time="Yesterday"
+                                 action="Actionable Insight"
+                               />
+                               <AlertCard 
+                                 type="MARKET" 
+                                 title="Market Intelligence" 
+                                 msg="Demand for Grade-A Tomato specimens projected to rise by 15% next month. Optimal harvest window: April 4-12." 
+                                 time="2 days ago"
+                                 action="Economics"
+                               />
                             </div>
                          </motion.div>
                        )}
@@ -434,7 +536,32 @@ export default function FarmerProfile({ isOpen, onClose }) {
     );
   }
 
-  function StatItem({ icon: Icon, label, value, sub }) {
+  function AlertCard({ type, title, msg, time, action }) {
+    const isCritical = type === 'CRITICAL';
+    return (
+      <div className={`p-8 rounded-[3rem] border transition-all ${
+        isCritical ? 'bg-red-50 border-red-100 text-red-900 shadow-premium' : 'bg-white border-slate-100 text-slate-900 shadow-sm'
+      }`}>
+         <div className="flex items-center justify-between mb-6">
+            <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+               isCritical ? 'bg-red-500 text-white border-transparent' : 'bg-slate-100 text-slate-500 border-slate-200'
+            }`}>
+               {type}
+            </div>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{time}</span>
+         </div>
+         <h5 className="text-sm font-black uppercase tracking-tight mb-3">{title}</h5>
+         <p className="text-xs font-medium text-slate-600 leading-relaxed tracking-tight mb-8">{msg}</p>
+         <button className={`w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+            isCritical ? 'bg-slate-900 text-white hover:bg-red-500' : 'bg-slate-50 text-slate-900 hover:bg-emerald-500 hover:text-white'
+         }`}>
+            {action}
+         </button>
+      </div>
+    );
+  }
+
+  function StatItem({ icon: Icon, label, value, sub, color = "text-emerald-500" }) {
     return (
       <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
         <div className="absolute top-0 right-0 p-4 text-slate-100 group-hover:text-emerald-500/10 transition-colors">

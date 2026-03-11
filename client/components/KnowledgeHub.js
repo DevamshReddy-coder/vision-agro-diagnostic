@@ -32,13 +32,22 @@ const diseases = [
     protocol: ["Remove nearby Junipers", "Fungicide sprays", "Prune galls"]
   },
   {
-    name: "Corn Common Rust",
-    code: "PATH-V728",
-    crop: "Maize",
-    severity: "Low",
-    symptoms: "Elongated, reddish-brown pustules (uredinia) scattered across both leaf surfaces. Leads to stunted growth and reduced grain fill in susceptible cultivars.",
-    img: "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?q=80&w=2000",
-    protocol: ["Fungicide if severe", "Check nitrogen levels", "Early planting"]
+    name: "Chili Leaf Curl",
+    code: "PATH-V552",
+    crop: "Chili/Pepper",
+    severity: "High",
+    symptoms: "Upward curling of leaves, thickening of veins, and severe stunting. Transmitted primarily by whiteflies in tropical climates.",
+    img: "https://images.unsplash.com/photo-1592892111425-15e04305f961?q=80&w=2000",
+    protocol: ["Apply organic pesticides", "Yellow sticky traps", "Reflective mulching"]
+  },
+  {
+    name: "Rice Blast",
+    code: "PATH-V112",
+    crop: "Paddy/Rice",
+    severity: "Critical",
+    symptoms: "Spindle-shaped lesions with gray centers on leaves and neck rot. Major threat to food security across Indian delta regions.",
+    img: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=2000",
+    protocol: ["Balanced fertilization", "Avoid high seed rates", "Fungicide treatment"]
   }
 ];
 

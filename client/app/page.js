@@ -42,12 +42,12 @@ export default function Home() {
   const [isBotOpen, setIsBotOpen] = useState(false);
   const [botContext, setBotContext] = useState(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [heroLocation, setHeroLocation] = useState('Central Network Base');
 
   useEffect(() => {
-    // Fetch live weather for the hero visual hub
-    const fetchHeroWeather = async () => {
+    const fetchHeroWeather = async (lat = 17.3850, lon = 78.4867) => {
       try {
-        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=17.3850&longitude=78.4867&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto');
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`);
         const data = await res.json();
         if (data.current) {
           const codeMap = { 0: 'Clear Sky', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast', 45: 'Foggy', 51: 'Drizzle', 61: 'Rainy' };
@@ -62,8 +62,31 @@ export default function Home() {
         console.warn("Hero weather sync failed, using calibrated defaults.");
       }
     };
-    fetchHeroWeather();
-    const interval = setInterval(fetchHeroWeather, 300000); // Sync every 5 mins
+
+    if (typeof window !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        await fetchHeroWeather(latitude, longitude);
+        try {
+           const geo = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+           const gData = await geo.json();
+           setHeroLocation(`${gData.city || 'Regional Zone'}, INDIA`);
+        } catch (e) {}
+      }, () => {
+        fetchHeroWeather();
+        setHeroLocation('Hyderabad, INDIA');
+      });
+    } else {
+      fetchHeroWeather();
+    }
+    
+    const interval = setInterval(() => {
+        if (navigator.geolocation) {
+           navigator.geolocation.getCurrentPosition((pos) => fetchHeroWeather(pos.coords.latitude, pos.coords.longitude));
+        } else {
+           fetchHeroWeather();
+        }
+    }, 300000); 
     return () => clearInterval(interval);
   }, []);
 
@@ -217,7 +240,7 @@ export default function Home() {
                             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                             <div className="absolute inset-0 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping opacity-60"></div>
                           </div>
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Live Data Stream</span>
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{heroLocation} // Data Stream</span>
                         </div>
                       </div>
                     </div>
