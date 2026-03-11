@@ -20,7 +20,8 @@ import {
   Droplets,
   Wind,
   Sprout,
-  LineChart
+  LineChart,
+  Bot
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useState, useEffect } from 'react';
@@ -31,11 +32,14 @@ const KnowledgeHub = dynamic(() => import('../components/KnowledgeHub'), { ssr: 
 const AuthModal = dynamic(() => import('../components/AuthModal'), { ssr: false });
 const HowItWorks = dynamic(() => import('../components/HowItWorks'), { ssr: false });
 const Navbar = dynamic(() => import('../components/Navbar'), { ssr: false });
+const AgriBot = dynamic(() => import('../components/AgriBot'), { ssr: false });
 
 export default function Home() {
   const [authScreen, setAuthScreen] = useState(null); // 'login' | 'register' | null
   const [heroWeather, setHeroWeather] = useState({ temp: 24, humidity: 68, wind: 14, condition: 'Partly Cloudy' });
   const [selectedLang, setSelectedLang] = useState('en-US');
+  const [isBotOpen, setIsBotOpen] = useState(false);
+  const [botContext, setBotContext] = useState(null);
 
   useEffect(() => {
     // Fetch live weather for the hero visual hub
@@ -64,7 +68,7 @@ export default function Home() {
   return (
     <div className="min-h-screen selection:bg-primary selection:text-white bg-white">
       <AuthModal isOpen={!!authScreen} initialScreen={authScreen || 'login'} onClose={() => setAuthScreen(null)} />
-      <Navbar onLoginClick={(type) => setAuthScreen(type)} />
+      <Navbar onLoginClick={(type) => setAuthScreen(type)} onBotToggle={() => setIsBotOpen(!isBotOpen)} />
 
       {/* Hero Section */}
       <section className="relative pt-12 lg:pt-16 pb-24 lg:pb-32 overflow-hidden bg-white">
@@ -158,12 +162,13 @@ export default function Home() {
                   <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 </motion.button>
                 <motion.button 
-                  whileHover={{ scale: 1.02, backgroundColor: "rgba(15,23,42,0.02)" }}
-                  className="w-full sm:w-auto px-10 py-7 border border-slate-200 text-slate-500 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.4em] flex items-center justify-center gap-4 transition-all duration-300 group"
-                  onClick={() => setAuthScreen('register')}
+                  whileHover={{ scale: 1.02, y: -4 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full sm:w-auto px-10 py-7 border border-slate-200 text-slate-900 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.4em] flex items-center justify-center gap-4 transition-all duration-300 group hover:border-emerald-500/30"
+                  onClick={() => setIsBotOpen(true)}
                 >
-                  Enterprise Access 
-                  <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                  <Bot size={18} className="text-emerald-500 animate-pulse" />
+                  Talk to Expert
                 </motion.button>
               </motion.div>
 
@@ -392,6 +397,7 @@ export default function Home() {
       <DiagnosisWorkspace 
         selectedLang={selectedLang} 
         onLangChange={setSelectedLang}
+        onResultUpdate={setBotContext}
       />
       <AnalyticsDashboard />
       <KnowledgeHub />
@@ -466,6 +472,13 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      <AgriBot 
+        context={botContext} 
+        selectedLang={selectedLang} 
+        onLangChange={setSelectedLang}
+        isOpen={isBotOpen}
+        onOpenChange={setIsBotOpen}
+      />
     </div>
   );
 }

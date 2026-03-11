@@ -10,11 +10,15 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import AgriBot from './AgriBot';
 
-export default function DiagnosisWorkspace({ selectedLang = 'en-US', onLangChange }) {
+export default function DiagnosisWorkspace({ selectedLang = 'en-US', onLangChange, onResultUpdate }) {
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+  const [result, setInternalResult] = useState(null);
+  const setResult = (val) => {
+    setInternalResult(val);
+    if (onResultUpdate) onResultUpdate(val);
+  };
   const [cropType, setCropType] = useState('Potato');
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -704,7 +708,6 @@ SYSTEM AUTH: VALIDATED
 
         </div>
       </div>
-      <AgriBot context={result} selectedLang={selectedLang} onLangChange={onLangChange} />
     </section>
   );
 }

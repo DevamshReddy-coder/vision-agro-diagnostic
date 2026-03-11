@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Leaf, Menu, X, User, LogOut, LayoutDashboard, History, Settings, ExternalLink, ChevronDown, Activity, ShieldCheck } from 'lucide-react';
+import { Leaf, Menu, X, User, LogOut, LayoutDashboard, History, Settings, ExternalLink, ChevronDown, Activity, ShieldCheck, Bot } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationCenter from './NotificationCenter';
 
-export default function Navbar({ onLoginClick }) {
+export default function Navbar({ onLoginClick, onBotToggle }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -113,6 +113,19 @@ export default function Navbar({ onLoginClick }) {
         <div className="flex items-center justify-end gap-5 lg:min-w-[280px]">
           {/* Global Event Stream */}
           <NotificationCenter />
+
+          {/* Neural Assistant Trigger */}
+          <motion.button
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onBotToggle}
+            className="w-10 h-10 bg-slate-900 text-emerald-400 rounded-xl flex items-center justify-center shadow-lg hover:shadow-emerald-500/20 transition-all border border-emerald-500/10 group relative"
+          >
+            <Bot size={20} />
+            <div className="absolute -bottom-8 right-0 bg-slate-900 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+               AI Assistant
+            </div>
+          </motion.button>
           
           {user ? (
             <div className="relative">

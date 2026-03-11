@@ -14,8 +14,10 @@ const SUPPORTED_LANGUAGES = [
   { code: 'bn-IN', name: 'Bengali (বাংলা)' },
 ];
 
-export default function AgriBot({ context, selectedLang: propLang, onLangChange }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function AgriBot({ context, selectedLang: propLang, onLangChange, isOpen: propIsOpen, onOpenChange }) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = propIsOpen !== undefined ? propIsOpen : internalIsOpen;
+  const setIsOpen = onOpenChange || setInternalIsOpen;
   const [internalLang, setInternalLang] = useState('en-US');
   
   const selectedLang = propLang || internalLang;
