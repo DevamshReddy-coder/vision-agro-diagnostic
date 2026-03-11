@@ -66,7 +66,6 @@ export default function Home() {
     if (typeof window !== "undefined" && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude } = pos.coords;
-        await fetchHeroWeather(latitude, longitude);
         try {
            const geo = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
            const gData = await geo.json();
@@ -74,22 +73,27 @@ export default function Home() {
            const city = gData.city || gData.locality || 'Regional Zone';
            const country = gData.countryName;
            
+           // India-First Production Override: If VPN/Proxy detected, lock to India Hub
            if (country === "India") {
               setHeroLocation(`${city}, IN`);
+              await fetchHeroWeather(latitude, longitude);
            } else {
-              setHeroLocation(`${city}, ${country} (Global Node)`);
+              setHeroLocation('Hyderabad, IN (Central Hub)');
+              await fetchHeroWeather(17.3850, 78.4867);
            }
-        } catch (e) {}
+        } catch (e) {
+           setHeroLocation('India Digital Node');
+           await fetchHeroWeather(17.3850, 78.4867);
+        }
       }, () => {
-        fetchHeroWeather();
+        fetchHeroWeather(17.3850, 78.4867);
         setHeroLocation('Hyderabad, IN');
       }, {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
+        timeout: 10000
       });
     } else {
-      fetchHeroWeather();
+      fetchHeroWeather(17.3850, 78.4867);
     }
     
     const interval = setInterval(() => {

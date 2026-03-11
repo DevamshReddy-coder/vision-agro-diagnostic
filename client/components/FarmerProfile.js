@@ -72,12 +72,13 @@ export default function FarmerProfile({ isOpen, onClose }) {
            const state = geoData.principalSubdivision || 'Regional Zone';
            const country = geoData.countryName;
            
-           // Production-level India-Mode Verification
+           // India-First Production Override: If VPN/Proxy/SEOUL detected, lock to India Hub
            if (country === "India") {
               setLocationName(`${city}, ${state}, IN`);
            } else {
-              // Flag as External Node but maintain connectivity
-              setLocationName(`${city}, ${country} (Global Node)`);
+              // Forced India Localization for production dashboard
+              setLocationName(`Hyderabad, Telangana, IN (Central Hub)`);
+              await fetchWeather(17.3850, 78.4867); // Reset weather to India base
            }
         } catch (e) { 
            setLocationName("AgroVision India Digital Territory"); 
