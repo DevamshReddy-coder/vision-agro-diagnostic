@@ -3,14 +3,19 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Camera, Upload, ShieldCheck, AlertCircle, RefreshCcw, Landmark, 
   Activity, ChevronRight, CheckCircle2, History, X, Leaf, Info,
-  Download, Share2, Zap, ArrowRight, Fingerprint, Cpu, Bot
+  Download, Share2, Zap, ArrowRight, Fingerprint, Cpu, Bot, Volume2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import AgriBot from './AgriBot';
 
-export default function DiagnosisWorkspace({ selectedLang = 'en-US', onLangChange, onResultUpdate }) {
+export default function DiagnosisWorkspace({ 
+  selectedLang = 'en-US', 
+  onLangChange, 
+  onResultUpdate,
+  onBotToggle 
+}) {
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -475,10 +480,16 @@ SYSTEM AUTH: VALIDATED
                               </div>
                            </div>
                         </div>
-                        <div className="flex flex-col items-end">
+                        <div className="flex flex-col items-end gap-3">
                            <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-[0.3em] rounded-xl flex items-center gap-3 backdrop-blur-sm shadow-emerald-glow">
                               <ShieldCheck size={14} strokeWidth={3} /> Protocol Verified
                            </div>
+                           <button
+                             onClick={onBotToggle}
+                             className="px-4 py-2 bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-xl flex items-center gap-3 hover:bg-emerald-500 hover:text-white transition-all shadow-premium"
+                           >
+                             <Volume2 size={14} /> Neural Audio Guide
+                           </button>
                         </div>
                       </div>
 

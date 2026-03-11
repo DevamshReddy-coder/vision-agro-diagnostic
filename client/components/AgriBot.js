@@ -44,7 +44,7 @@ export default function AgriBot({ context, selectedLang: propLang, onLangChange,
     }
   }, [selectedLang]);
   const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const recognitionRef = useRef(null);
@@ -64,7 +64,6 @@ export default function AgriBot({ context, selectedLang: propLang, onLangChange,
        if (prev.length <= 1) return [{ role: 'assistant', text: newIntro }];
        return [...prev, { role: 'assistant', text: newIntro }];
      });
-     speak(newIntro);
   }, [selectedLang]);
 
   useEffect(() => {
@@ -572,6 +571,17 @@ export default function AgriBot({ context, selectedLang: propLang, onLangChange,
                        <MicOff size={18} />
                     </div>
                   ) : <Mic size={18} />}
+                </button>
+                <button
+                  onClick={() => setIsSpeaking(!isSpeaking)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                    isSpeaking 
+                      ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)]' 
+                      : 'bg-white border border-slate-200 text-slate-600 shadow-sm hover:text-emerald-600 hover:border-emerald-200'
+                  }`}
+                  title={isSpeaking ? "Voice On" : "Voice Muted"}
+                >
+                  {isSpeaking ? <Volume2 size={18} /> : <VolumeX size={18} />}
                 </button>
                 <input
                   type="text"

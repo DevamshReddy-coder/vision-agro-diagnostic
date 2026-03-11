@@ -398,6 +398,7 @@ export default function Home() {
         selectedLang={selectedLang} 
         onLangChange={setSelectedLang}
         onResultUpdate={setBotContext}
+        onBotToggle={() => setIsBotOpen(!isBotOpen)}
       />
       <AnalyticsDashboard />
       <KnowledgeHub />
