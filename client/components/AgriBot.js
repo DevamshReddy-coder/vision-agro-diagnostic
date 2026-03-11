@@ -76,6 +76,13 @@ export default function AgriBot({ context, selectedLang: propLang, onLangChange,
     }
   }, []);
 
+  // UseEffect to catch absolute silence when muted
+  useEffect(() => {
+    if (!isSpeaking && synthRef.current?.speaking) {
+      synthRef.current.cancel();
+    }
+  }, [isSpeaking]);
+
   const toggleListen = () => {
     if (isListening) {
       setIsListening(false);
