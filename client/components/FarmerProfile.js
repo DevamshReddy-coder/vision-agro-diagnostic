@@ -16,6 +16,7 @@ export default function FarmerProfile({ isOpen, onClose }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [editData, setEditData] = useState({});
   const [weather, setWeather] = useState({ temp: '--', condition: 'Connecting...', humidity: '--', wind: '--' });
   const [locationName, setLocationName] = useState('Detecting Territory...');
   const [acreageSyncing, setAcreageSyncing] = useState(false);
