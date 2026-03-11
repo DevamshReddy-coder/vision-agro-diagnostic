@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Camera, Upload, ShieldCheck, AlertCircle, RefreshCcw, Landmark, 
   Activity, ChevronRight, CheckCircle2, History, X, Leaf, Info,
-  Download, Share2, Zap, ArrowRight
+  Download, Share2, Zap, ArrowRight, Fingerprint, Cpu, Bot
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -48,18 +48,19 @@ export default function DiagnosisWorkspace({ selectedLang = 'en-US', onLangChang
           setInferenceProgress(data.progress || 10);
        } else if (data.status === 'COMPLETED') {
           // Finish loading and show data
+          const r = data.result || {};
           setResult({
-            disease: data.result.disease || "Unknown Anomaly",
-            crop: data.result.crop || "Unknown",
-            confidence: (data.result.diseaseConfidence * 100).toFixed(1),
-            severity: data.result.severity || "Unknown",
-            riskLevel: data.result.riskLevel || "Unknown",
-            affectedAreaPercent: data.result.affectedAreaPercent || 0,
+            disease: r.disease || "Unknown Anomaly",
+            crop: r.crop || "Unknown",
+            confidence: r.diseaseConfidence ? (r.diseaseConfidence * 100).toFixed(1) : "0.0",
+            severity: r.severity || "Unknown",
+            riskLevel: r.riskLevel || "Unknown",
+            affectedAreaPercent: r.affectedAreaPercent || 0,
             xai_visualization: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=1000",
-            recommendations: data.result.recommendations || { pesticides: [], organic: [], prevention: [] },
-            insights: data.result.insights || {},
-            healthScore: data.result.healthScore || null,
-            message: data.result.message || null
+            recommendations: r.recommendations || { pesticides: [], organic: [], prevention: [] },
+            insights: r.insights || {},
+            healthScore: r.healthScore || null,
+            message: r.message || null
           });
           setLoading(false);
           setInferenceProgress(null);

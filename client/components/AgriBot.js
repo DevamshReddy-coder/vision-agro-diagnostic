@@ -31,8 +31,16 @@ export default function AgriBot({ context, selectedLang: propLang, onLangChange 
       'en-US': 'Namaste! I am your AgroVision AI assistant. Ask me anything about your crops, diseases, or the diagnostic report.'
   };
 
-  const [messages, setMessages] = useState([]); // Start empty, useEffect will push the initial intro
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  
+  // Initialize categorized intro message on mount and lang change
+  useEffect(() => {
+    if (messages.length === 0) {
+      const introText = INTRO_MAP[selectedLang] || INTRO_MAP['en-US'];
+      setMessages([{ role: 'assistant', text: introText }]);
+    }
+  }, [selectedLang]);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -264,7 +272,7 @@ export default function AgriBot({ context, selectedLang: propLang, onLangChange 
         const res = await axios.post(`${baseUrl}/inference/chat`, {
           message: textToSend,
           history: messages.map(m => ({ role: m.role, text: m.text })),
-          context: { ...context, __USER_PREF_LANG: selectedLang }
+          context: { ...(context || {}), __USER_PREF_LANG: selectedLang }
         });
 
         const replyText = res.data.reply;
@@ -364,7 +372,7 @@ export default function AgriBot({ context, selectedLang: propLang, onLangChange 
           const chatRes = await axios.post(`${baseUrl}/inference/chat`, {
             message: systemPromptPayload,
             history: messages.map(m => ({ role: m.role, text: m.text })),
-            context: { ...context, latestScan: diagnosisData, __USER_PREF_LANG: selectedLang }
+            context: { ...(context || {}), latestScan: diagnosisData, __USER_PREF_LANG: selectedLang }
           });
 
           const replyText = chatRes.data.reply;
