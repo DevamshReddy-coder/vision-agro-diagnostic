@@ -10,7 +10,7 @@ const diseases = [
     crop: "Tomato/Potato",
     severity: "Moderate",
     symptoms: "Concentric dark brown ring lesions (target spots) primarily affecting older foliage, leading to chlorosis and premature leaf drop.",
-    img: "https://images.unsplash.com/photo-1591857177580-dc82b9ac4e1e?q=80&w=2000", // Verified pathological specimen close-up
+    img: "https://images.unsplash.com/photo-1591857177580-dc82b9ac4e1e?q=80&w=2000", 
     protocol: ["Apply copper fungicide", "Remove lower leaves", "Mulch around base"]
   },
   {
@@ -28,7 +28,7 @@ const diseases = [
     crop: "Apple",
     severity: "High",
     symptoms: "Bright yellow-orange pycnia on upper leaf surface. Development of aecial cups on the underside, leading to significant fruit deformation and defoliation.",
-    img: "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=2000",
+    img: "https://images.unsplash.com/photo-1628151253457-3f33de8e8609?q=80&w=2000",
     protocol: ["Remove nearby Junipers", "Fungicide sprays", "Prune galls"]
   },
   {
@@ -37,7 +37,7 @@ const diseases = [
     crop: "Chili/Pepper",
     severity: "High",
     symptoms: "Upward curling of leaves, thickening of veins, and severe stunting. Transmitted primarily by whiteflies in tropical climates.",
-    img: "https://images.unsplash.com/photo-1592840331052-16e15c2c6f95?q=80&w=2000",
+    img: "https://images.unsplash.com/photo-1621644799011-8f5530739345?q=80&w=2000",
     protocol: ["Apply organic pesticides", "Yellow sticky traps", "Reflective mulching"]
   },
   {
