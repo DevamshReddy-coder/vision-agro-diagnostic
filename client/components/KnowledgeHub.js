@@ -10,7 +10,7 @@ const diseases = [
     crop: "Tomato/Potato",
     severity: "Moderate",
     symptoms: "Concentric dark brown ring lesions (target spots) primarily affecting older foliage, leading to chlorosis and premature leaf drop.",
-    img: "https://images.unsplash.com/photo-1591857177580-dc82b9ac4e1e?q=80&w=2000", 
+    img: "/images/diseases/early_blight.png", 
     protocol: ["Apply copper fungicide", "Remove lower leaves", "Mulch around base"]
   },
   {
@@ -19,7 +19,7 @@ const diseases = [
     crop: "Potato/Tomato",
     severity: "High",
     symptoms: "Rapidly expanding water-soaked lesions with necrotizing centers. Characteristic white late-blight mycelium visible on leaf undersides during high humidity.",
-    img: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=2000",
+    img: "/images/diseases/late_blight.png",
     protocol: ["Destroy infected plants", "Avoid overhead watering", "Resistant varieties"]
   },
   {
@@ -28,7 +28,7 @@ const diseases = [
     crop: "Apple",
     severity: "High",
     symptoms: "Bright yellow-orange pycnia on upper leaf surface. Development of aecial cups on the underside, leading to significant fruit deformation and defoliation.",
-    img: "https://images.unsplash.com/photo-1628151253457-3f33de8e8609?q=80&w=2000",
+    img: "/images/diseases/cedar_apple_rust.png",
     protocol: ["Remove nearby Junipers", "Fungicide sprays", "Prune galls"]
   },
   {
@@ -37,7 +37,7 @@ const diseases = [
     crop: "Chili/Pepper",
     severity: "High",
     symptoms: "Upward curling of leaves, thickening of veins, and severe stunting. Transmitted primarily by whiteflies in tropical climates.",
-    img: "https://images.unsplash.com/photo-1621644799011-8f5530739345?q=80&w=2000",
+    img: "/images/diseases/chili_leaf_curl.png",
     protocol: ["Apply organic pesticides", "Yellow sticky traps", "Reflective mulching"]
   },
   {
@@ -46,7 +46,7 @@ const diseases = [
     crop: "Paddy/Rice",
     severity: "Critical",
     symptoms: "Spindle-shaped lesions with gray centers on leaves and neck rot. Major threat to food security across Indian delta regions.",
-    img: "https://images.unsplash.com/photo-1592330173432-edc51ad2f14d?q=80&w=2000",
+    img: "/images/diseases/rice_blast.png",
     protocol: ["Balanced fertilization", "Avoid high seed rates", "Fungicide treatment"]
   }
 ];
