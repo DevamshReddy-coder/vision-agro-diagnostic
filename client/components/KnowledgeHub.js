@@ -37,7 +37,7 @@ const diseases = [
     crop: "Chili/Pepper",
     severity: "High",
     symptoms: "Upward curling of leaves, thickening of veins, and severe stunting. Transmitted primarily by whiteflies in tropical climates.",
-    img: "https://images.unsplash.com/photo-1592892111425-15e04305f961?q=80&w=2000",
+    img: "https://images.unsplash.com/photo-1592840331052-16e15c2c6f95?q=80&w=2000",
     protocol: ["Apply organic pesticides", "Yellow sticky traps", "Reflective mulching"]
   },
   {
