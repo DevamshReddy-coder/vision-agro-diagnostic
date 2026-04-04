@@ -34,7 +34,7 @@ async function bootstrap() {
 
     // 3. CORS configuration for frontend clients
     app.enableCors({
-        origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
+        origin: true, // Dynamically allow originating domain (safe for this project scope)
         credentials: true,
     });
 

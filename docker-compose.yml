@@ -8,30 +8,35 @@ services:
     ports:
       - "6379:6379"
 
-  # Infrastructure: Persistence
-  mongodb:
-    image: mongo:latest
+  # Infrastructure: Persistence (PostgreSQL for v4.0 Engine)
+  postgres:
+    image: postgres:15-alpine
     container_name: agro_db
+    restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: agro_user
+      POSTGRES_PASSWORD: secure_pwd
+      POSTGRES_DB: agrovision_core
     volumes:
-      - mongodb_data:/data/db
+      - pg_data:/var/lib/postgresql/data
 
-  # Core API: Node.js Layered Architecture
+  # Core API: NestJS v4.0 Engine (Modern Backend)
   backend:
-    build: ./server
+    build: ./agrovision-backend
     container_name: agro_api
     restart: unless-stopped
     ports:
       - "5000:5000"
+    env_file:
+      - ./agrovision-backend/.env
     environment:
-      - MONGO_URI=mongodb://mongodb:27017/agrovision
-      - JWT_SECRET=agrovision_startup_secret_2026
-      - ML_SERVICE_URL=http://ml-service:8000
+      - DATABASE_URL=postgresql://agro_user:secure_pwd@postgres:5432/agrovision_core
       - REDIS_URL=redis://redis:6379
       - NODE_ENV=production
     depends_on:
-      - mongodb
+      - postgres
       - redis
 
   # ML Service: Python FastAPI Computer Vision
@@ -57,4 +62,4 @@ services:
       - backend
 
 volumes:
-  mongodb_data:
+  pg_data:
