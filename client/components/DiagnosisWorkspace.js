@@ -38,9 +38,9 @@ export default function DiagnosisWorkspace({
     
     try {
       socketRef.current = io(socketUrl, {
-        transports: ['websocket', 'polling'],
+        transports: ['polling', 'websocket'],
         forceNew: true,
-        reconnectionAttempts: 3
+        reconnectionAttempts: 5
       });
       
       if (!socketRef.current) throw new Error("Socket instantiation failed");
@@ -167,7 +167,7 @@ SYSTEM AUTH: VALIDATED
 
       try {
         const token = localStorage.getItem('token');
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://agrovision-api-7uwq.onrender.com/api/v1';
         setInferenceProgress(20); 
         const res = await axios.post(`${baseUrl}/inference/analyze`, formData, {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
@@ -239,7 +239,7 @@ SYSTEM AUTH: VALIDATED
           console.log("Geolocation denied or timed out, using regional fallback.");
           executeDiagnosis();
         },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 } 
+        { enableHighAccuracy: true, timeout: 1000, maximumAge: 60000 } 
       );
     } else {
       executeDiagnosis();
