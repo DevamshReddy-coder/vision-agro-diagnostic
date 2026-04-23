@@ -13,6 +13,8 @@ import { InferenceModule } from './modules/inference/inference.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { LibraryModule } from './modules/library/library.module';
 
+import { AppController } from './app.controller';
+
 @Module({
     imports: [
         // 1. Structured JSON logging with Pino
@@ -49,7 +51,7 @@ import { LibraryModule } from './modules/library/library.module';
         AnalyticsModule,
         LibraryModule,
     ],
-    controllers: [],
+    controllers: [AppController],
     providers: [
         // Global rate limit guard applied to ALL routes
         {
