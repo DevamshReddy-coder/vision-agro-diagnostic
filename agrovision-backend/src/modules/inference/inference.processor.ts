@@ -122,7 +122,7 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT):
   }
 }`;
                 
-                const response = await ai.models.generateContent({
+                const result = await ai.models.generateContent({
                     model: 'gemini-1.5-flash',
                     contents: [
                         {
@@ -144,7 +144,19 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT):
                     }
                 });
 
-                const rawJson = response.text;
+                // Adaptive SDK handling: Try function text() then property text
+                let rawJson = "";
+                const r: any = result;
+                try {
+                    if (typeof r.text === 'function') rawJson = r.text();
+                    else if (r.response && typeof r.response.text === 'function') rawJson = r.response.text();
+                    else rawJson = r.text || r.response?.text || "";
+                } catch (e) {
+                    rawJson = r.text || "";
+                }
+
+                console.log(`[AI Worker] Raw AI Response Length: ${rawJson.length} chars`);
+                
                 if (rawJson) {
                     const jsonString = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
                     finalOutput = JSON.parse(jsonString);
