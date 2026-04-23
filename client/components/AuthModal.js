@@ -57,6 +57,13 @@ const AuthModalContentUI = ({ onClose, screen, setScreen, error, setError, succe
       const data = res.data;
       localStorage.setItem('token', data.access_token || data.token);
       localStorage.setItem('user', JSON.stringify(data.user || data));
+      
+      // Set cookies for Next.js Middleware compatibility
+      const token = data.access_token || data.token;
+      const role = data.user?.role || data.role || 'Farmer';
+      document.cookie = `auth-token=${token}; path=/; max-age=604800; samesite=lax`;
+      document.cookie = `user-role=${role}; path=/; max-age=604800; samesite=lax`;
+
       setSuccess('Google authorization successful! Loading workspace...');
       setTimeout(() => { onClose(); window.location.reload(); }, 1200);
     } catch (err) {
@@ -310,6 +317,13 @@ export default function AuthModal({ isOpen, onClose, initialScreen }) {
       const data = res.data;
       localStorage.setItem('token', data.access_token || data.token);
       localStorage.setItem('user', JSON.stringify(data.user || data));
+      
+      // Set cookies for Next.js Middleware compatibility
+      const token = data.access_token || data.token;
+      const role = data.user?.role || data.role || 'Farmer';
+      document.cookie = `auth-token=${token}; path=/; max-age=604800; samesite=lax`;
+      document.cookie = `user-role=${role}; path=/; max-age=604800; samesite=lax`;
+
       setSuccess('Welcome back! Loading your workspace...');
       setTimeout(() => { onClose(); window.location.reload(); }, 1200);
     } catch (err) {
@@ -332,6 +346,13 @@ export default function AuthModal({ isOpen, onClose, initialScreen }) {
       const data = res.data;
       localStorage.setItem('token', data.access_token || data.token);
       localStorage.setItem('user', JSON.stringify(data.user || data));
+      
+      // Set cookies for Next.js Middleware compatibility
+      const token = data.access_token || data.token;
+      const role = data.user?.role || data.role || 'Farmer';
+      document.cookie = `auth-token=${token}; path=/; max-age=604800; samesite=lax`;
+      document.cookie = `user-role=${role}; path=/; max-age=604800; samesite=lax`;
+
       setSuccess('Account created! Setting up your workspace...');
       setTimeout(() => { onClose(); window.location.reload(); }, 1200);
     } catch (err) {
