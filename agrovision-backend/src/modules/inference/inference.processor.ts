@@ -204,20 +204,14 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
                 };
             }
 
-            // Perception Tuning: High-Sensitivity Mode (30% threshold)
-            if (finalOutput.cropConfidence < 0.30) {
-                throw new Error("Crop identification uncertain");
-            }
-
-            if (finalOutput.diseaseConfidence && finalOutput.disease !== 'Healthy' && finalOutput.diseaseConfidence < 0.30) {
-                throw new Error("No confident disease detected");
-            }
+            // Perception Tuning: Zero-Blocker Mode (Always provide best guess)
+            console.log(`[AI Worker] Confidence Scores: Crop ${finalOutput.cropConfidence}, Disease ${finalOutput.diseaseConfidence}`);
 
             // Update DB to Complete
             await this.reportRepo.update(reportId, {
                 status: DiagnosticStatus.COMPLETED,
                 diseasePredictedName: finalOutput.disease,
-                confidenceScore: finalOutput.diseaseConfidence,
+                confidenceScore: finalOutput.diseaseConfidence || 0.5,
                 fullResult: finalOutput
             });
 
