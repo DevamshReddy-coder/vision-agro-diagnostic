@@ -204,12 +204,12 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
                 };
             }
 
-            // Perception Tuning
-            if (finalOutput.cropConfidence < 0.50) {
+            // Perception Tuning: High-Sensitivity Mode (30% threshold)
+            if (finalOutput.cropConfidence < 0.30) {
                 throw new Error("Crop identification uncertain");
             }
 
-            if (finalOutput.diseaseConfidence && finalOutput.disease !== 'Healthy' && finalOutput.diseaseConfidence < 0.50) {
+            if (finalOutput.diseaseConfidence && finalOutput.disease !== 'Healthy' && finalOutput.diseaseConfidence < 0.30) {
                 throw new Error("No confident disease detected");
             }
 
