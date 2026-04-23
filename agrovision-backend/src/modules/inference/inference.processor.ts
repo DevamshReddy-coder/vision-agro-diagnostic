@@ -67,9 +67,13 @@ export class InferenceProcessor {
         const cropHint = cropType && cropType !== "Potato" && cropType !== "None" ? `The user suspects or identified this plant as: ${cropType}. Use this as a strong hint, but verify it via the image characteristics.` : `The crop type was not provided. You MUST identify the crop species accurately.`;
 
         // --- REAL-TIME MULTIMODAL PLANT DISEASE ANALYSIS ENGINE ---
-        try {
-            this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 30 });
-            const ai = new GoogleGenAI({ apiKey, apiVersion: 'v1beta' });
+        let attempts = 0;
+        const maxAttempts = 3;
+
+        while (attempts < maxAttempts) {
+            try {
+                this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 30 + (attempts * 10) });
+                const ai = new GoogleGenAI({ apiKey, apiVersion: 'v1beta' });
 
             const promptString = `You are the core reasoning engine of a production agricultural diagnostic platform called AgroVision AI, developed for the project “A Vision-Driven Agro Diagnostic Framework Using Machine Learning.” Your responsibility is to generate accurate real-time crop health diagnostics using outputs from trained machine learning models, image analysis features, and environmental context. 
 
@@ -130,35 +134,36 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
   }
 }`;
 
-            this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 50 });
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: [
-                    {
-                        role: 'user',
-                        parts: [
-                            {
-                                inlineData: {
-                                    data: base64Image,
-                                    mimeType: mimeType || 'image/jpeg'
-                                }
-                            },
-                            { text: promptString }
-                        ]
+                this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 50 });
+                const response = await ai.models.generateContent({
+                    model: 'gemini-1.5-flash',
+                    contents: [
+                        {
+                            role: 'user',
+                            parts: [
+                                {
+                                    inlineData: {
+                                        data: base64Image,
+                                        mimeType: mimeType || 'image/jpeg'
+                                    }
+                                },
+                                { text: promptString }
+                            ]
+                        }
+                    ],
+                    config: {
+                        responseMimeType: "application/json",
+                        temperature: 0.1
                     }
-                ],
-                config: {
-                    responseMimeType: "application/json",
-                    temperature: 0.1
-                }
-            });
+                });
 
-            const rawJson = response.text;
-            if (rawJson) {
-                // Remove markdown code block syntax if Gemini wrapped it
-                const jsonString = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
-                finalOutput = JSON.parse(jsonString);
-            }
+                const rawJson = response.text;
+                if (rawJson) {
+                    const jsonString = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+                    finalOutput = JSON.parse(jsonString);
+                }
+                
+                if (finalOutput) break; // Success, exit retry loop
             this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 95 });
 
             if (!finalOutput || !finalOutput.disease) {
@@ -175,11 +180,11 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
                 };
             }
 
-            if (finalOutput.cropConfidence < 0.70) {
+            if (finalOutput.cropConfidence < 0.50) {
                 throw new Error("Crop identification uncertain");
             }
 
-            if (finalOutput.diseaseConfidence && finalOutput.disease !== 'Healthy' && finalOutput.diseaseConfidence < 0.60) {
+            if (finalOutput.diseaseConfidence && finalOutput.disease !== 'Healthy' && finalOutput.diseaseConfidence < 0.50) {
                 throw new Error("No confident disease detected");
             }
 
@@ -202,8 +207,17 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
 
             return { reportId, outcome: finalOutput };
 
-        } catch (err: any) {
-            console.error("[AI Worker] Gemini Execution Failed:", err);
+            } catch (err: any) {
+                attempts++;
+                const isRetryable = err.status === 503 || err.message?.includes('503') || err.message?.includes('Unavailable');
+                
+                if (isRetryable && attempts < maxAttempts) {
+                    console.warn(`[AI Worker] Gemini busy (503). Retry attempt ${attempts}/${maxAttempts}...`);
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    continue;
+                }
+                
+                console.error("[AI Worker] Gemini Execution Failed:", err);
 
             // Log Error in DB
             await this.reportRepo.update(reportId, { status: DiagnosticStatus.FAILED });
@@ -256,7 +270,7 @@ ${context ? `[CURRENT DIAGNOSTIC/ENVIRONMENT CONTEXT]: ${JSON.stringify(context)
 
         try {
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-1.5-flash',
                 contents: [
                     ...formattedHistory,
                     {
