@@ -1,4 +1,7 @@
-FROM node:18-alpine
+FROM node:20-alpine
+
+# Install build dependencies for native modules (bcrypt, sqlite3, pg)
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /usr/src/app
 

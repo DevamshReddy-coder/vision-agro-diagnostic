@@ -73,4 +73,7 @@ async function bootstrap() {
     console.log(`📖 API Docs: http://localhost:${port}/api/v1/docs`);
 }
 
-bootstrap();
+bootstrap().catch(err => {
+    console.error('❌ CRITICAL BOOTSTRAP ERROR:', err);
+    process.exit(1);
+});
