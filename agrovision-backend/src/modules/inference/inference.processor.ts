@@ -73,7 +73,7 @@ export class InferenceProcessor {
         while (attempts < maxAttempts) {
             try {
                 this.gateway.server.emit('inference_progress', { reportId, status: 'PROCESSING', progress: 30 + (attempts * 10) });
-                const ai = new GoogleGenAI({ apiKey, apiVersion: 'v1beta' });
+                const ai = new GoogleGenAI({ apiKey, apiVersion: 'v1' });
                 
                 const promptString = `You are the core reasoning engine of a production agricultural diagnostic platform called AgroVision AI, developed for the project “A Vision-Driven Agro Diagnostic Framework Using Machine Learning.” Your responsibility is to generate accurate real-time crop health diagnostics using outputs from trained machine learning models, image analysis features, and environmental context. 
 
@@ -249,7 +249,7 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
             throw new InternalServerErrorException("AI Engine offline: Missing GEMINI_API_KEY on server.");
         }
 
-        const ai = new GoogleGenAI({ apiKey, apiVersion: 'v1beta' });
+        const ai = new GoogleGenAI({ apiKey, apiVersion: 'v1' });
 
         const systemPrompt = `[CRITICAL: LANGUAGE ENFORCEMENT]
 You MUST respond ONLY in the following language: ${context?.__USER_PREF_LANG || 'English'}.
