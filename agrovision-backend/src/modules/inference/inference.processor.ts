@@ -211,26 +211,28 @@ JSON FORMAT SCHEMA (STRICTLY RETURN ONLY THIS JSON OBJECT, NO MARKDOWN TAGS, NO 
             const mappedConfidence = finalOutput.diseaseConfidence || (finalOutput.disease === 'Healthy' ? 0.98 : 0.85);
             const mappedArea = finalOutput.affectedAreaPercent || (finalOutput.severity === 'Critical' ? 82 : finalOutput.severity === 'High' ? 45 : 12);
 
+            const calibratedResult = {
+                ...finalOutput,
+                diseaseConfidence: mappedConfidence,
+                affectedAreaPercent: mappedArea
+            };
+
             // Update DB to Complete
             await this.reportRepo.update(reportId, {
                 status: DiagnosticStatus.COMPLETED,
                 diseasePredictedName: finalOutput.disease,
                 confidenceScore: mappedConfidence,
-                fullResult: {
-                    ...finalOutput,
-                    diseaseConfidence: mappedConfidence,
-                    affectedAreaPercent: mappedArea
-                }
+                fullResult: calibratedResult
             });
 
-            // Final emission
+            // Final emission with calibrated data
             this.gateway.server.emit('inference_progress', {
                 reportId,
                 status: 'COMPLETED',
-                result: finalOutput
+                result: calibratedResult
             });
 
-            return { reportId, outcome: finalOutput };
+            return { reportId, outcome: calibratedResult };
 
         } catch (err: any) {
             console.error("[AI Worker] Post-Processing Failed:", err);
