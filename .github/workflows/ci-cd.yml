@@ -63,7 +63,7 @@ jobs:
       - name: 🏗️ Build Next.js production bundle
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: https://agrovision-api-7uwq.onrender.com/api/v1
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
       - name: ✅ Build successful
         run: echo "Frontend compiled successfully!"

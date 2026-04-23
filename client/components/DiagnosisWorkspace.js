@@ -167,7 +167,7 @@ SYSTEM AUTH: VALIDATED
 
       try {
         const token = localStorage.getItem('token');
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://agrovision-api-7uwq.onrender.com/api/v1';
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
         setInferenceProgress(20); 
         const res = await axios.post(`${baseUrl}/inference/analyze`, formData, {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
